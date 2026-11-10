@@ -1,0 +1,20 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`exports hashed class properties 1`] = `
+{
+  "dependencies": [],
+  "diagnostics": [],
+  "exports": {
+    "button": {
+      "color": "c0aecb60",
+    },
+    "label": {
+      "color": "c0aecb60",
+    },
+    "link": {
+      "color": "c0aecb60",
+    },
+  },
+  "variables": {},
+}
+`;

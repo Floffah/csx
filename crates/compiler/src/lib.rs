@@ -7,8 +7,10 @@ use lightningcss::stylesheet::{ParserOptions, StyleSheet};
 use lightningcss::traits::ToCss;
 use lightningcss::values::ident::DashedIdent;
 use lightningcss::values::syntax::ParsedComponent;
+use parcel_selectors::parser::Component;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::hash::{DefaultHasher, Hash, Hasher};
 use tsify::{Ts, Tsify};
 use wasm_bindgen::prelude::*;
 
@@ -105,9 +107,45 @@ impl JsCompiler {
         // log(format!("{sheet:#?}").as_str());
 
         let mut token_blocks: Vec<TokensBlock> = vec![];
+        let mut result = JsCompileModuleResult::default();
+        let mut declarations = HashMap::new();
 
         for rule in sheet.rules.0 {
             match rule {
+                CssRule::Style(style) => {
+                    for selector in &style.selectors.0 {
+                        let [Component::Class(class)] = selector.iter_raw_match_order().as_slice()
+                        else {
+                            continue;
+                        };
+                        let exports = result.exports.entry(class.0.to_string()).or_default();
+
+                        for (property, important) in style.declarations.iter() {
+                            let name = property
+                                .property_id()
+                                .to_css_string(PrinterOptions::default())?;
+                            let declaration =
+                                property.to_css_string(important, PrinterOptions::default())?;
+                            let mut hasher = DefaultHasher::new();
+                            (&options.id, &declaration).hash(&mut hasher);
+                            let atomic_class = format!("c{:07x}", hasher.finish() & 0x0fff_ffff);
+
+                            let previous = declarations
+                                .entry(atomic_class.clone())
+                                .or_insert_with(|| (declaration.clone(), important));
+                            if previous.0 != declaration {
+                                return Err(JsError::new(&format!(
+                                    "Atomic class hash collision for {atomic_class}"
+                                )));
+                            }
+                            if important
+                                || !exports.get(&name).is_some_and(|name| declarations[name].1)
+                            {
+                                exports.insert(name, atomic_class);
+                            }
+                        }
+                    }
+                }
                 CssRule::Unknown(at_rule) => {
                     let name = at_rule.name;
                     if (name != "tokens" || at_rule.prelude.0.len() <= 0) {
@@ -151,9 +189,10 @@ impl JsCompiler {
                                 .to_css_string(PrinterOptions::default())?;
                                 let value = value.trim().strip_prefix(":");
 
-                                tokens_block
-                                    .block
-                                    .insert(current_token_ident.clone(), value.unwrap_or("").to_string());
+                                tokens_block.block.insert(
+                                    current_token_ident.clone(),
+                                    value.unwrap_or("none").to_string(),
+                                );
 
                                 current_token_ident = String::default();
                                 token_body_accum = vec![];
@@ -170,6 +209,6 @@ impl JsCompiler {
             log(format!("{token_blocks:#?}").as_str());
         }
 
-        Ok(JsCompileModuleResult::default().into_ts()?)
+        Ok(result.into_ts()?)
     }
 }
