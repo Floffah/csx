@@ -1,11 +1,12 @@
 //! Rust compiler for CSX. Implementation has not started.
 
+use lightningcss::declaration::DeclarationBlock;
 use lightningcss::printer::PrinterOptions;
-use lightningcss::properties::custom::{Token, TokenList, TokenOrValue};
+use lightningcss::properties::Property;
+use lightningcss::properties::custom::{CustomPropertyName, Token, TokenOrValue};
 use lightningcss::rules::CssRule;
 use lightningcss::stylesheet::{ParserOptions, StyleSheet};
 use lightningcss::traits::ToCss;
-use lightningcss::values::ident::DashedIdent;
 use lightningcss::values::syntax::ParsedComponent;
 use parcel_selectors::parser::Component;
 use serde::{Deserialize, Serialize};
@@ -14,13 +15,6 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use tsify::{Ts, Tsify};
 use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen]
-extern "C" {
-    // Use `js_namespace` here to bind `console.log(..)` instead of just
-    // `log(..)`
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
-}
 #[derive(Tsify, Serialize, Deserialize)]
 #[tsify(rename = "CompilerOptions")]
 pub struct JsCompilerOptions {
@@ -75,12 +69,6 @@ pub enum JsDiagnosticSeverity {
     Warning,
 }
 
-#[derive(Default, Debug)]
-struct TokensBlock {
-    name: String,
-    block: HashMap<String, String>,
-}
-
 /// CSX Compiler, give me css and i will give you more css
 #[wasm_bindgen(js_name = Compiler)]
 pub struct JsCompiler {
@@ -104,9 +92,6 @@ impl JsCompiler {
 
         let sheet = StyleSheet::parse(options.source.as_str(), ParserOptions::default())?;
 
-        // log(format!("{sheet:#?}").as_str());
-
-        let mut token_blocks: Vec<TokensBlock> = vec![];
         let mut result = JsCompileModuleResult::default();
         let mut declarations = HashMap::new();
 
@@ -146,67 +131,45 @@ impl JsCompiler {
                         }
                     }
                 }
-                CssRule::Unknown(at_rule) => {
-                    let name = at_rule.name;
-                    if (name != "tokens" || at_rule.prelude.0.len() <= 0) {
+                CssRule::Unknown(at_rule) if at_rule.name == "tokens" => {
+                    let Some(TokenOrValue::Token(Token::Ident(name))) = at_rule.prelude.0.first()
+                    else {
                         continue;
-                    }
-
-                    let tokens_name: Option<String> = match at_rule.prelude.0.first() {
-                        Some(TokenOrValue::Token(Token::Ident(name))) => Some(name.to_string()),
-                        _ => continue,
                     };
-
-                    // log(tokens_name.unwrap().as_str())
-
-                    let parsed_tokens: Option<Vec<TokenOrValue>> = match at_rule.block {
-                        Some(TokenList(array)) => Some(array),
-                        None => None,
-                    };
-                    if parsed_tokens.is_none() {
+                    let Some(block) = at_rule.block else {
                         continue;
-                    }
-
-                    let mut tokens_block = TokensBlock {
-                        name: tokens_name.unwrap(),
-                        block: HashMap::new(),
                     };
-                    let parsed_tokens = parsed_tokens.unwrap();
+                    let variables = result.variables.entry(name.to_string()).or_default();
+                    let css = ParsedComponent::TokenList(block)
+                        .to_css_string(PrinterOptions::default())?;
+                    let declarations = DeclarationBlock::parse_string(
+                        &css,
+                        ParserOptions {
+                            error_recovery: true,
+                            ..ParserOptions::default()
+                        },
+                    )
+                    .map_err(|error| JsError::new(&error.to_string()))?;
 
-                    let mut current_token_ident = String::default();
-                    let mut token_body_accum: Vec<TokenOrValue> = vec![];
-
-                    for token in parsed_tokens {
-                        match token {
-                            TokenOrValue::DashedIdent(DashedIdent(ident)) => {
-                                current_token_ident = ident.to_string()
-                            }
-                            TokenOrValue::Token(Token::WhiteSpace(_)) => {}
-                            TokenOrValue::Token(Token::Semicolon) => {
-                                let value = ParsedComponent::TokenList(TokenList(std::mem::take(
-                                    &mut token_body_accum,
-                                )))
-                                .to_css_string(PrinterOptions::default())?;
-                                let value = value.trim().strip_prefix(":");
-
-                                tokens_block.block.insert(
-                                    current_token_ident.clone(),
-                                    value.unwrap_or("none").to_string(),
-                                );
-
-                                current_token_ident = String::default();
-                                token_body_accum = vec![];
-                            }
-                            token => token_body_accum.push(token),
-                        }
+                    for (property, _) in declarations.iter() {
+                        let Property::Custom(custom) = property else {
+                            continue;
+                        };
+                        let CustomPropertyName::Custom(name) = &custom.name else {
+                            continue;
+                        };
+                        let declaration =
+                            property.to_css_string(false, PrinterOptions::default())?;
+                        let mut hasher = DefaultHasher::new();
+                        declaration.hash(&mut hasher);
+                        variables.insert(
+                            name.0.to_string(),
+                            format!("--c{:07x}", hasher.finish() & 0x0fff_ffff),
+                        );
                     }
-
-                    token_blocks.push(tokens_block);
                 }
                 _ => (),
             }
-
-            log(format!("{token_blocks:#?}").as_str());
         }
 
         Ok(result.into_ts()?)

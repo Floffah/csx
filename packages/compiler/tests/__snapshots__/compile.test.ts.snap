@@ -15,6 +15,11 @@ exports[`exports hashed class properties 1`] = `
       "color": "c0aecb60",
     },
   },
-  "variables": {},
+  "variables": {
+    "test": {
+      "--blue": "--c8fbdbff",
+      "--red": "--c3f019fd",
+    },
+  },
 }
 `;

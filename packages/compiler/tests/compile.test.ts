@@ -20,7 +20,7 @@ test("exports hashed class properties", () => {
             source: `
             @tokens test {
                 --red: #FF0000;
-                --blue: #0000FF;
+                --blue: #0000FF
             }
 
             .button {
@@ -38,7 +38,7 @@ test("exports hashed class properties", () => {
 
         expect(result.diagnostics).toEqual([]);
 
-        expect(result).toMatchSnapshot()
+        expect(result).toMatchSnapshot();
     } finally {
         compiler.free();
     }
