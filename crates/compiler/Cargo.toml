@@ -1,0 +1,19 @@
+[package]
+name = "csx-compiler"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+serde = { version = "1", features = ["derive"] }
+tsify = { version = "0.5", default-features = false, features = ["js"] }
+js-sys = "0.3"
+lightningcss = "1.0.0-alpha.72"
+serde-wasm-bindgen = "0.6"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "0.3", features = ["wasm_js"] }

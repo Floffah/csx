@@ -1,0 +1,23 @@
+{
+    "name": "@csx/compiler",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "files": [
+        "dist"
+    ],
+    "exports": {
+        ".": {
+            "types": "./dist/node/index.d.mts",
+            "browser": "./dist/browser/index.mjs",
+            "node": "./dist/node/index.mjs",
+            "default": "./dist/browser/index.mjs"
+        }
+    },
+    "scripts": {
+        "build": "bun run build:wasm && tsdown",
+        "build:wasm": "wasm-pack build ../../crates/compiler --target bundler --out-dir ../../packages/compiler/wasm --out-name csx_compiler --release",
+        "test": "bun test ./tests",
+        "test:browser": "vite tests/browser --host 127.0.0.1"
+    }
+}

@@ -1,0 +1,21 @@
+{
+    "name": "@csx/postcss",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "files": [
+        "dist"
+    ],
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.mts",
+            "import": "./dist/index.mjs"
+        }
+    },
+    "scripts": {
+        "build": "tsdown"
+    },
+    "peerDependencies": {
+        "postcss": "^8.5.32"
+    }
+}

@@ -1,0 +1,32 @@
+{
+    "$schema": "https://turborepo.dev/schema.json",
+    "globalDependencies": [
+        "tsconfig.json",
+        "Cargo.toml",
+        "Cargo.lock",
+        "crates/**"
+    ],
+    "tasks": {
+        "build": {
+            "dependsOn": ["^build"],
+            "outputs": ["dist/**"]
+        },
+        "@csx/compiler#build": {
+            "outputs": ["dist/**", "wasm/**"]
+        },
+        "test": {
+            "dependsOn": ["build"],
+            "cache": false
+        },
+        "//#typecheck:ts": {
+            "dependsOn": ["@csx/compiler#build"],
+            "cache": false
+        },
+        "//#check:rust": {
+            "cache": false
+        },
+        "//#test:rust": {
+            "cache": false
+        }
+    }
+}

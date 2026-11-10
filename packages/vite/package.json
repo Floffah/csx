@@ -1,0 +1,21 @@
+{
+    "name": "@csx/vite",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "files": [
+        "dist"
+    ],
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.mts",
+            "import": "./dist/index.mjs"
+        }
+    },
+    "scripts": {
+        "build": "tsdown"
+    },
+    "peerDependencies": {
+        "vite": "^8.3.7"
+    }
+}
