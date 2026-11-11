@@ -1,11 +1,14 @@
 import {
     Compiler,
+    emitDeclarations,
+    emitMappedDeclarations,
     emitModule,
     type CompileModuleOptions,
     type CompileModuleResult,
     type CompilerOptions,
     type Diagnostic,
 } from "@csx/compiler";
+import { decode } from "@jridgewell/sourcemap-codec";
 import { expect, test } from "bun:test";
 
 test("exports hashed class properties", () => {
@@ -44,6 +47,19 @@ test("exports hashed class properties", () => {
         expect(emitModule(result)).toBe(
             emitModule({ exports: result.exports }),
         );
+        expect(emitDeclarations(result)).toBe(
+            [
+                'import type { CSXStyle } from "@csx/csx";',
+                "",
+                "declare const styles: {",
+                '    readonly "button": CSXStyle;',
+                '    readonly "label": CSXStyle;',
+                '    readonly "link": CSXStyle;',
+                "};",
+                "export default styles;",
+                "",
+            ].join("\n"),
+        );
         const color = result.exports.button.color;
         expect(compiler.emit()).toContain(
             `.${color} { color: var(--test-red); }`,
@@ -53,6 +69,44 @@ test("exports hashed class properties", () => {
         ).toHaveLength(1);
         const hover = result.exports.button[":hover:color"];
         expect(compiler.emit()).toContain(`.${hover}:hover { color: #00f; }`);
+    } finally {
+        compiler.free();
+    }
+});
+
+test("maps exported classes to the start of their preferred CSS rule", () => {
+    const compiler = new Compiler({
+        resolve: async () => "",
+        load: async () => "",
+    });
+    try {
+        const result = compiler.compileModule({
+            id: "/src/Button.x.css",
+            source: [
+                ".button:hover, :hover.hover-only { color: red; }",
+                '/* 🦊 */ [data-name=".ignore"], .button,',
+                ".link { color: blue; }",
+                ".button { color: green; }",
+            ].join("\r\n"),
+        });
+        const { declaration, map } = emitMappedDeclarations(result, {
+            file: "Button.x.d.css.ts",
+            source: "../../../src/Button.x.css",
+        });
+
+        expect(declaration).toEndWith(
+            "//# sourceMappingURL=Button.x.d.css.ts.map\n",
+        );
+        const { sources, mappings } = JSON.parse(map);
+        expect(sources).toEqual(["../../../src/Button.x.css"]);
+        expect(decode(mappings)).toEqual([
+            [],
+            [],
+            [],
+            [[13, 0, 1, 9]],
+            [[13, 0, 0, 0]],
+            [[13, 0, 1, 9]],
+        ]);
     } finally {
         compiler.free();
     }

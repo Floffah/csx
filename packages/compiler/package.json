@@ -14,10 +14,12 @@
             "default": "./dist/browser/index.mjs"
         }
     },
+    "dependencies": {
+        "@jridgewell/sourcemap-codec": "^1.6.0"
+    },
     "scripts": {
         "build": "bun run build:wasm && tsdown",
         "build:wasm": "wasm-pack build ../../crates/compiler --target bundler --out-dir ../../packages/compiler/wasm --out-name csx_compiler --release",
-        "test": "bun test ./tests",
-        "test:browser": "vite tests/browser --host 127.0.0.1"
+        "test": "bun test ./tests"
     }
 }

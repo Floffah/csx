@@ -4,6 +4,20 @@ exports[`exports hashed class properties 1`] = `
 {
   "dependencies": [],
   "diagnostics": [],
+  "exportLocations": {
+    "button": {
+      "column": 12,
+      "line": 6,
+    },
+    "label": {
+      "column": 12,
+      "line": 9,
+    },
+    "link": {
+      "column": 12,
+      "line": 9,
+    },
+  },
   "exports": {
     "button": {
       ":hover:color": "c1ce20fa",

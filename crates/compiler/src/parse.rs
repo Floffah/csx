@@ -2,7 +2,7 @@ use lightningcss::declaration::DeclarationBlock;
 use lightningcss::printer::PrinterOptions;
 use lightningcss::properties::custom::{CustomPropertyName, Token, TokenOrValue};
 use lightningcss::properties::{Property, PropertyId};
-use lightningcss::rules::CssRule;
+use lightningcss::rules::{CssRule, Location};
 use lightningcss::selector::PseudoClass;
 use lightningcss::stylesheet::{ParserOptions, StyleSheet};
 use lightningcss::traits::ToCss;
@@ -14,6 +14,8 @@ use wasm_bindgen::JsError;
 pub(super) enum CollectedBlock {
     Class {
         name: String,
+        condition: Condition,
+        location: Location,
         declarations: Vec<Declaration>,
     },
     Tokens {
@@ -123,6 +125,8 @@ pub(super) fn parse(source: &str) -> Result<Vec<CollectedBlock>, JsError> {
                     }
                     blocks.push(CollectedBlock::Class {
                         name: class.0.to_string(),
+                        condition,
+                        location: style.loc,
                         declarations,
                     });
                 }

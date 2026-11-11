@@ -6,6 +6,7 @@ target/
 *.tsbuildinfo
 packages/compiler/wasm/
 .turbo/
+**/.csx/types/
 
 # Created by https://www.toptal.com/developers/gitignore/api/rust,macos,windows,linux,jetbrains+all,node,react
 # Edit at https://www.toptal.com/developers/gitignore?templates=rust,macos,windows,linux,jetbrains+all,node,react

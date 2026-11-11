@@ -39,12 +39,21 @@ pub struct JsCompileModuleResult {
     /// User class name -> property key -> generated atomic class name.
     /// Conditional keys include the selector suffix, for example `:hover:color`.
     pub exports: HashMap<String, HashMap<String, String>>,
+    /// Export name -> preferred rule start (zero-based line and UTF-16 column).
+    #[serde(rename = "exportLocations")]
+    pub export_locations: HashMap<String, ExportLocation>,
     /// Token block name -> token property name -> generated CSS variable name.
     pub variables: HashMap<String, HashMap<String, String>>,
     /// Canonical IDs of modules this compilation depends on.
     pub dependencies: Vec<String>,
     #[tsify(type = "Diagnostic[]")]
     pub diagnostics: Vec<JsDiagnostic>,
+}
+
+#[derive(Tsify, Serialize, Deserialize)]
+pub struct ExportLocation {
+    pub line: u32,
+    pub column: u32,
 }
 
 #[derive(Tsify, Serialize, Deserialize)]
@@ -93,10 +102,28 @@ impl JsCompiler {
         let blocks = parse::parse(&options.source)?;
         let mut result = JsCompileModuleResult::default();
         let mut atomic_declarations: HashMap<String, Declaration> = HashMap::new();
+        let mut base_locations = HashSet::new();
 
         for block in &blocks {
             match block {
-                CollectedBlock::Class { name, declarations } => {
+                CollectedBlock::Class {
+                    name,
+                    condition,
+                    location,
+                    declarations,
+                } => {
+                    let position = ExportLocation {
+                        line: location.line,
+                        column: location.column - 1,
+                    };
+                    if *condition == Condition::Base && base_locations.insert(name) {
+                        result.export_locations.insert(name.clone(), position);
+                    } else {
+                        result
+                            .export_locations
+                            .entry(name.clone())
+                            .or_insert(position);
+                    }
                     let exports = result.exports.entry(name.clone()).or_default();
                     for declaration in declarations {
                         let css = &declaration.css;

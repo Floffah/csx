@@ -1,3 +1,4 @@
 # Lockfiles are managed by their package managers.
 bun.lock
 Cargo.lock
+**/.csx/types/

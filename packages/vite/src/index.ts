@@ -1,7 +1,9 @@
-import { readFile } from "node:fs/promises";
-import { Compiler, emitModule } from "@csx/compiler";
+import { randomUUID } from "node:crypto";
+import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { basename, dirname, isAbsolute, join, relative, sep } from "node:path";
+import { Compiler, emitMappedDeclarations, emitModule } from "@csx/compiler";
 import postcss, { type AtRule } from "postcss";
-import type { Environment, Plugin } from "vite";
+import { normalizePath, type Environment, type Plugin } from "vite";
 
 const modulePrefix = "\0csx:";
 const moduleSuffix = ".js";
@@ -62,7 +64,40 @@ export default function csx(): Plugin {
                 compilers.set(this.environment, compiler);
             }
 
-            return emitModule(compiler.compileModule({ id, source }));
+            const result = compiler.compileModule({ id, source });
+            const root = this.environment.config.root;
+            const stylesheet = relative(root, id);
+            if (!isAbsolute(stylesheet) && !stylesheet.startsWith(`..${sep}`)) {
+                const declarationPath = join(
+                    root,
+                    ".csx/types",
+                    stylesheet.replace(/\.css$/, ".d.css.ts"),
+                );
+                const directory = dirname(declarationPath);
+                const { declaration, map } = emitMappedDeclarations(result, {
+                    file: basename(declarationPath),
+                    source: normalizePath(relative(directory, id)),
+                });
+                await mkdir(directory, { recursive: true });
+                const mapPath = `${declarationPath}.map`;
+                const suffix = `.${randomUUID()}.tmp`;
+                const temporaryDeclaration = declarationPath + suffix;
+                const temporaryMap = mapPath + suffix;
+                try {
+                    await writeFile(temporaryDeclaration, declaration);
+                    await writeFile(temporaryMap, map);
+                    await rename(temporaryMap, mapPath);
+                    await rename(temporaryDeclaration, declarationPath);
+                } catch (error) {
+                    await Promise.all([
+                        rm(temporaryDeclaration, { force: true }),
+                        rm(temporaryMap, { force: true }),
+                    ]);
+                    throw error;
+                }
+            }
+
+            return emitModule(result);
         },
         async transform(source, id) {
             const [file] = id.split("?", 1);
