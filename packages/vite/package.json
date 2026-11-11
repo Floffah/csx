@@ -16,7 +16,8 @@
         "build": "tsdown"
     },
     "dependencies": {
-        "@csx/compiler": "workspace:*"
+        "@csx/compiler": "workspace:*",
+        "postcss": "^8.5.32"
     },
     "peerDependencies": {
         "vite": "^8.3.7"
