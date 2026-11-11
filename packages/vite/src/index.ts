@@ -8,6 +8,10 @@ const moduleSuffix = ".js";
 const manifestName = "virtual:csx-manifest";
 const manifestId = "\0" + manifestName;
 
+function sourceId(moduleId: string): string {
+    return moduleId.slice(modulePrefix.length, -moduleSuffix.length);
+}
+
 export default function csx(): Plugin {
     const compilers = new WeakMap<Environment, Compiler>();
     const directiveStylesheets = new WeakMap<Environment, Set<string>>();
@@ -34,10 +38,7 @@ export default function csx(): Plugin {
             }
             if (!moduleId.startsWith(modulePrefix)) return;
 
-            const id = moduleId.slice(
-                modulePrefix.length,
-                -moduleSuffix.length,
-            );
+            const id = sourceId(moduleId);
             this.addWatchFile(id);
 
             const source = await readFile(id, "utf8");
@@ -79,26 +80,49 @@ export default function csx(): Plugin {
             });
             if (directives.length === 0) return;
 
-            if (this.environment.mode === "dev") {
+            let moduleIds: string[];
+            const environment = this.environment;
+            if (environment.mode === "dev") {
                 let ids = directiveStylesheets.get(this.environment);
                 if (!ids) {
                     ids = new Set();
                     directiveStylesheets.set(this.environment, ids);
                 }
                 ids.add(id);
-                await this.environment.transformRequest(manifestName);
+                await environment.transformRequest(manifestName);
+                const manifest =
+                    environment.moduleGraph.getModuleById(manifestId);
+                const modules = [...(manifest?.importedModules ?? [])].filter(
+                    (module) => module.id?.startsWith(modulePrefix),
+                );
+                // Transforming the manifest resolves its imports without loading them.
+                await Promise.all(
+                    modules.map((module) =>
+                        environment.transformRequest(module.url),
+                    ),
+                );
+                moduleIds = modules.map((module) => sourceId(module.id!));
             } else {
-                await this.load({ id: manifestId, resolveDependencies: true });
+                const manifest = await this.load({
+                    id: manifestId,
+                    resolveDependencies: true,
+                });
+                const modules = manifest.importedIds.filter((id) =>
+                    id.startsWith(modulePrefix),
+                );
+                await Promise.all(modules.map((id) => this.load({ id })));
+                moduleIds = modules.map(sourceId);
             }
 
+            const css = compilers.get(this.environment)?.emit(moduleIds) ?? "";
             for (const directive of directives) {
-                directive.replaceWith('.hello { content: "world"; }');
+                directive.replaceWith(css);
             }
-            const { css, map } = stylesheet.toResult({
+            const result = stylesheet.toResult({
                 to: file,
                 map: { inline: false, annotation: false },
             });
-            return { code: css, map: map.toString() };
+            return { code: result.css, map: result.map.toString() };
         },
         hotUpdate: {
             order: "post",
