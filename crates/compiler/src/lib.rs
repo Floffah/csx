@@ -73,6 +73,7 @@ pub enum JsDiagnosticSeverity {
 #[wasm_bindgen(js_name = Compiler)]
 pub struct JsCompiler {
     options: JsCompilerOptions,
+    modules: HashMap<String, ModuleDeclarations>,
 }
 
 #[wasm_bindgen(js_class = Compiler)]
@@ -80,20 +81,122 @@ impl JsCompiler {
     #[wasm_bindgen(constructor)]
     pub fn new(options: Ts<JsCompilerOptions>) -> Result<JsCompiler, JsError> {
         let options = options.to_rust()?;
-        return Ok(Self { options });
+        return Ok(Self {
+            options,
+            modules: HashMap::new(),
+        });
     }
 
     #[wasm_bindgen(js_name = compileModule)]
     pub fn compile_module(
-        &self,
+        &mut self,
         options: Ts<JsCompileModuleOptions>,
     ) -> Result<Ts<JsCompileModuleResult>, JsError> {
         let options = options.to_rust()?;
 
-        let sheet = StyleSheet::parse(options.source.as_str(), ParserOptions::default())?;
-
+        let mut declarations = ModuleDeclarations::parse(&options.source)?;
         let mut result = JsCompileModuleResult::default();
-        let mut declarations = HashMap::new();
+        let atomic_declarations = &mut declarations.atomic_declarations;
+
+        for block in &declarations.blocks {
+            match block {
+                CollectedBlock::Class { name, declarations } => {
+                    let exports = result.exports.entry(name.clone()).or_default();
+                    for declaration in declarations {
+                        let css = declaration.to_css(declaration.important);
+                        let mut hasher = DefaultHasher::new();
+                        (&options.id, &css).hash(&mut hasher);
+                        let atomic_class = format!("c{:07x}", hasher.finish() & 0x0fff_ffff);
+
+                        let previous = atomic_declarations
+                            .entry(atomic_class.clone())
+                            .or_insert_with(|| (css.clone(), declaration.important));
+                        if previous.0 != css {
+                            return Err(JsError::new(&format!(
+                                "Atomic class hash collision for {atomic_class}"
+                            )));
+                        }
+                        if declaration.important
+                            || !exports
+                                .get(&declaration.property)
+                                .is_some_and(|name| atomic_declarations[name].1)
+                        {
+                            exports.insert(declaration.property.clone(), atomic_class);
+                        }
+                    }
+                }
+                CollectedBlock::Tokens { name, declarations } => {
+                    let variables = result.variables.entry(name.clone()).or_default();
+                    for declaration in declarations {
+                        let mut hasher = DefaultHasher::new();
+                        declaration.to_css(false).hash(&mut hasher);
+                        variables.insert(
+                            declaration.property.clone(),
+                            format!("--c{:07x}", hasher.finish() & 0x0fff_ffff),
+                        );
+                    }
+                }
+            }
+        }
+
+        let result = result.into_ts()?;
+        self.modules.insert(options.id, declarations);
+        Ok(result)
+    }
+}
+
+#[derive(Default)]
+struct ModuleDeclarations {
+    blocks: Vec<CollectedBlock>,
+    /// Generated class name -> (serialized declaration, importance).
+    atomic_declarations: HashMap<String, (String, bool)>,
+}
+
+enum CollectedBlock {
+    Class {
+        name: String,
+        declarations: Vec<Declaration>,
+    },
+    Tokens {
+        name: String,
+        declarations: Vec<Declaration>,
+    },
+}
+
+struct Declaration {
+    property: String,
+    value: String,
+    important: bool,
+    // Keep the printer's property spelling and spacing for the existing hashes.
+    css_prefix: String,
+}
+
+impl Declaration {
+    fn new(property: &Property, name: String, important: bool) -> Result<Self, JsError> {
+        let value = property.value_to_css_string(PrinterOptions::default())?;
+        let css = property.to_css_string(false, PrinterOptions::default())?;
+        let css_prefix = css
+            .strip_suffix(&value)
+            .ok_or_else(|| JsError::new("Could not separate the declaration value"))?
+            .to_owned();
+        Ok(Self {
+            property: name,
+            value,
+            important,
+            css_prefix,
+        })
+    }
+
+    fn to_css(&self, important: bool) -> String {
+        let suffix = if important { " !important" } else { "" };
+        format!("{}{}{suffix}", self.css_prefix, self.value)
+    }
+}
+
+impl ModuleDeclarations {
+    fn parse(source: &str) -> Result<Self, JsError> {
+        let sheet = StyleSheet::parse(source, ParserOptions::default())?;
+        let mut module = Self::default();
 
         for rule in sheet.rules.0 {
             match rule {
@@ -103,32 +206,18 @@ impl JsCompiler {
                         else {
                             continue;
                         };
-                        let exports = result.exports.entry(class.0.to_string()).or_default();
 
+                        let mut declarations = Vec::new();
                         for (property, important) in style.declarations.iter() {
                             let name = property
                                 .property_id()
                                 .to_css_string(PrinterOptions::default())?;
-                            let declaration =
-                                property.to_css_string(important, PrinterOptions::default())?;
-                            let mut hasher = DefaultHasher::new();
-                            (&options.id, &declaration).hash(&mut hasher);
-                            let atomic_class = format!("c{:07x}", hasher.finish() & 0x0fff_ffff);
-
-                            let previous = declarations
-                                .entry(atomic_class.clone())
-                                .or_insert_with(|| (declaration.clone(), important));
-                            if previous.0 != declaration {
-                                return Err(JsError::new(&format!(
-                                    "Atomic class hash collision for {atomic_class}"
-                                )));
-                            }
-                            if important
-                                || !exports.get(&name).is_some_and(|name| declarations[name].1)
-                            {
-                                exports.insert(name, atomic_class);
-                            }
+                            declarations.push(Declaration::new(property, name, important)?);
                         }
+                        module.blocks.push(CollectedBlock::Class {
+                            name: class.0.to_string(),
+                            declarations,
+                        });
                     }
                 }
                 CssRule::Unknown(at_rule) if at_rule.name == "tokens" => {
@@ -139,10 +228,9 @@ impl JsCompiler {
                     let Some(block) = at_rule.block else {
                         continue;
                     };
-                    let variables = result.variables.entry(name.to_string()).or_default();
                     let css = ParsedComponent::TokenList(block)
                         .to_css_string(PrinterOptions::default())?;
-                    let declarations = DeclarationBlock::parse_string(
+                    let block = DeclarationBlock::parse_string(
                         &css,
                         ParserOptions {
                             error_recovery: true,
@@ -151,27 +239,29 @@ impl JsCompiler {
                     )
                     .map_err(|error| JsError::new(&error.to_string()))?;
 
-                    for (property, _) in declarations.iter() {
+                    let mut declarations = Vec::new();
+                    for (property, important) in block.iter() {
                         let Property::Custom(custom) = property else {
                             continue;
                         };
                         let CustomPropertyName::Custom(name) = &custom.name else {
                             continue;
                         };
-                        let declaration =
-                            property.to_css_string(false, PrinterOptions::default())?;
-                        let mut hasher = DefaultHasher::new();
-                        declaration.hash(&mut hasher);
-                        variables.insert(
+                        declarations.push(Declaration::new(
+                            property,
                             name.0.to_string(),
-                            format!("--c{:07x}", hasher.finish() & 0x0fff_ffff),
-                        );
+                            important,
+                        )?);
                     }
+                    module.blocks.push(CollectedBlock::Tokens {
+                        name: name.to_string(),
+                        declarations,
+                    });
                 }
                 _ => (),
             }
         }
 
-        Ok(result.into_ts()?)
+        Ok(module)
     }
 }

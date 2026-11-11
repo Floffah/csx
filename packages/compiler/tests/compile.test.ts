@@ -1,5 +1,6 @@
 import {
     Compiler,
+    emitModule,
     type CompileModuleOptions,
     type CompileModuleResult,
     type CompilerOptions,
@@ -39,6 +40,8 @@ test("exports hashed class properties", () => {
         expect(result.diagnostics).toEqual([]);
 
         expect(result).toMatchSnapshot();
+
+        expect(emitModule(result)).toBe(emitModule({ exports: result.exports }));
     } finally {
         compiler.free();
     }

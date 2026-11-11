@@ -1,0 +1,13 @@
+{
+    "name": "@csx/example-vite-js",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build"
+    },
+    "devDependencies": {
+        "@csx/vite": "workspace:*",
+        "vite": "^8.3.7"
+    }
+}
