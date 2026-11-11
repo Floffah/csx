@@ -51,7 +51,43 @@ test("exports hashed class properties", () => {
         expect(
             compiler.emit().match(new RegExp(`\\.${color} `, "g")),
         ).toHaveLength(1);
-        expect(compiler.emit()).not.toContain(":hover");
+        const hover = result.exports.button[":hover:color"];
+        expect(compiler.emit()).toContain(`.${hover}:hover { color: #00f; }`);
+    } finally {
+        compiler.free();
+    }
+});
+
+test("keeps base and hover atoms distinct and orders their layers", () => {
+    const compiler = new Compiler({
+        resolve: async () => "",
+        load: async () => "",
+    });
+
+    try {
+        const { exports } = compiler.compileModule({
+            id: "/hover.x.css",
+            source: `
+                .button { color: red; }
+                .button:hover, :hover.link { color: red; }
+                .button:hover { color: blue; }
+                .button:hover:focus { color: green; }
+            `,
+        });
+        const base = exports.button.color;
+        const hover = exports.button[":hover:color"];
+        const linkHover = exports.link[":hover:color"];
+        expect(linkHover).not.toBe(base);
+        const css = compiler.emit();
+        expect(css).toContain(`.${base} { color: red; }`);
+        expect(css).toContain(`.${hover}:hover { color: #00f; }`);
+        expect(css).toContain(`.${linkHover}:hover { color: red; }`);
+        expect(css).not.toContain("color: green");
+        expect(
+            css.indexOf("@layer csx.longhand.unconditional.base {"),
+        ).toBeLessThan(
+            css.indexOf("@layer csx.longhand.unconditional.hover {"),
+        );
     } finally {
         compiler.free();
     }

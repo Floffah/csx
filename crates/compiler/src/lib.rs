@@ -2,7 +2,7 @@
 
 mod parse;
 
-use parse::{CollectedBlock, Declaration, Layer};
+use parse::{CollectedBlock, Condition, Declaration, Layer};
 use serde::{Deserialize, Serialize};
 use std::cmp::Reverse;
 use std::collections::{HashMap, HashSet};
@@ -36,7 +36,8 @@ pub struct JsCompileModuleOptions {
 #[derive(Default, Tsify, Serialize, Deserialize)]
 #[tsify(hashmap_as_object, rename = "CompileModuleResult")]
 pub struct JsCompileModuleResult {
-    /// User class name -> property name -> generated atomic class name.
+    /// User class name -> property key -> generated atomic class name.
+    /// Conditional keys include the selector suffix, for example `:hover:color`.
     pub exports: HashMap<String, HashMap<String, String>>,
     /// Token block name -> token property name -> generated CSS variable name.
     pub variables: HashMap<String, HashMap<String, String>>,
@@ -101,17 +102,24 @@ impl JsCompiler {
                         let css = &declaration.css;
                         let mut hasher = DefaultHasher::new();
                         (&options.id, css).hash(&mut hasher);
+                        let key = if declaration.condition == Condition::Base {
+                            declaration.property.clone()
+                        } else {
+                            let suffix = declaration.condition.suffix();
+                            suffix.hash(&mut hasher);
+                            format!("{suffix}:{}", declaration.property)
+                        };
                         let atomic_class = format!("c{:07x}", hasher.finish() & 0x0fff_ffff);
 
                         let previous = atomic_declarations
                             .entry(atomic_class.clone())
                             .or_insert_with(|| declaration.clone());
-                        if &previous.css != css {
+                        if *previous != *declaration {
                             return Err(JsError::new(&format!(
                                 "Atomic class hash collision for {atomic_class}"
                             )));
                         }
-                        exports.insert(declaration.property.clone(), atomic_class);
+                        exports.insert(key, atomic_class);
                     }
                 }
                 CollectedBlock::Tokens { name, declarations } => {
@@ -155,7 +163,7 @@ impl JsCompiler {
         for module in modules {
             for (name, declaration) in module {
                 if let Some(previous) = atoms.insert(name, declaration)
-                    && previous.css != declaration.css
+                    && previous != declaration
                 {
                     return Err(JsError::new(&format!(
                         "Atomic class hash collision for {name}"
@@ -171,6 +179,7 @@ impl JsCompiler {
         atoms.sort_unstable_by_key(|(name, declaration)| {
             (
                 declaration.layer,
+                declaration.condition,
                 Reverse(declaration.shorthand_width),
                 declaration.property.as_str(),
                 *name,
@@ -178,22 +187,52 @@ impl JsCompiler {
         });
 
         let layers = [
-            (Layer::Reset, "csx.reset.unconditional.base"),
-            (Layer::Shorthand, "csx.shorthand.unconditional.base"),
-            (Layer::Longhand, "csx.longhand.unconditional.base"),
+            (
+                Layer::Reset,
+                Condition::Base,
+                "csx.reset.unconditional.base",
+            ),
+            (
+                Layer::Reset,
+                Condition::Hover,
+                "csx.reset.unconditional.hover",
+            ),
+            (
+                Layer::Shorthand,
+                Condition::Base,
+                "csx.shorthand.unconditional.base",
+            ),
+            (
+                Layer::Shorthand,
+                Condition::Hover,
+                "csx.shorthand.unconditional.hover",
+            ),
+            (
+                Layer::Longhand,
+                Condition::Base,
+                "csx.longhand.unconditional.base",
+            ),
+            (
+                Layer::Longhand,
+                Condition::Hover,
+                "csx.longhand.unconditional.hover",
+            ),
         ];
-        let mut css = format!("@layer {};\n", layers.map(|(_, name)| name).join(", "));
-        for (layer, name) in layers {
+        let mut css = format!("@layer {};\n", layers.map(|(_, _, name)| name).join(", "));
+        for (layer, condition, name) in layers {
             let mut rules = atoms
                 .iter()
-                .filter(|(_, declaration)| declaration.layer == layer)
+                .filter(|(_, declaration)| {
+                    declaration.layer == layer && declaration.condition == condition
+                })
                 .peekable();
             if rules.peek().is_none() {
                 continue;
             }
             css.push_str(&format!("\n@layer {name} {{\n"));
+            let suffix = condition.suffix();
             for (class, declaration) in rules {
-                css.push_str(&format!("  .{class} {{ {}; }}\n", declaration.css));
+                css.push_str(&format!("  .{class}{suffix} {{ {}; }}\n", declaration.css));
             }
             css.push_str("}\n");
         }

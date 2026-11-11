@@ -1,0 +1,22 @@
+@csx;
+
+body {
+    display: grid;
+    min-height: 100dvh;
+    place-items: center;
+    margin: 0;
+    padding: 1rem;
+    background-color: #f1f5f9;
+    color: #0f172a;
+    font-family: system-ui, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+#root {
+    display: grid;
+    width: 100%;
+    justify-items: center;
+}

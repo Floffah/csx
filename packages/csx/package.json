@@ -1,5 +1,5 @@
 {
-    "name": "@csx/postcss",
+    "name": "@csx/csx",
     "version": "0.0.0",
     "private": true,
     "type": "module",
@@ -13,9 +13,10 @@
         }
     },
     "scripts": {
-        "build": "tsdown"
+        "build": "tsdown",
+        "test": "bun test ./tests"
     },
-    "peerDependencies": {
-        "postcss": "^8.5.32"
+    "dependencies": {
+        "clsx": "^2.1.1"
     }
 }

@@ -6,6 +6,7 @@ exports[`exports hashed class properties 1`] = `
   "diagnostics": [],
   "exports": {
     "button": {
+      ":hover:color": "c1ce20fa",
       "color": "c0aecb60",
     },
     "label": {

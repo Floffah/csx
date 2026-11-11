@@ -1,0 +1,28 @@
+.card {
+    display: grid;
+    justify-items: center;
+    gap: 1rem;
+    width: min(100%, 22rem);
+    padding: 2rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 1.5rem;
+    background-color: #fff;
+    box-shadow: 0 10px 24px #0f172a14;
+}
+
+.title {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.count {
+    color: #475569;
+    font-size: 4rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+}
+
+.counted {
+    color: #4338ca;
+}

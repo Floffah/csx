@@ -3,6 +3,7 @@ use lightningcss::printer::PrinterOptions;
 use lightningcss::properties::custom::{CustomPropertyName, Token, TokenOrValue};
 use lightningcss::properties::{Property, PropertyId};
 use lightningcss::rules::CssRule;
+use lightningcss::selector::PseudoClass;
 use lightningcss::stylesheet::{ParserOptions, StyleSheet};
 use lightningcss::traits::ToCss;
 use lightningcss::values::syntax::ParsedComponent;
@@ -28,16 +29,32 @@ pub(super) enum Layer {
     Longhand,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub(super) enum Condition {
+    Base,
+    Hover,
+}
+
+impl Condition {
+    pub(super) fn suffix(self) -> &'static str {
+        match self {
+            Self::Base => "",
+            Self::Hover => ":hover",
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Eq)]
 pub(super) struct Declaration {
     pub(super) property: String,
     pub(super) css: String,
     pub(super) layer: Layer,
+    pub(super) condition: Condition,
     pub(super) shorthand_width: usize,
 }
 
 impl Declaration {
-    fn new(property: &Property, name: String) -> Result<Self, JsError> {
+    fn new(property: &Property, name: String, condition: Condition) -> Result<Self, JsError> {
         let id = property.property_id();
         let (layer, shorthand_width) = match id {
             PropertyId::All => (Layer::Reset, 0),
@@ -50,6 +67,7 @@ impl Declaration {
             property: name,
             css: property.to_css_string(false, PrinterOptions::default())?,
             layer,
+            condition,
             shorthand_width,
         })
     }
@@ -83,9 +101,17 @@ pub(super) fn parse(source: &str) -> Result<Vec<CollectedBlock>, JsError> {
         match rule {
             CssRule::Style(style) => {
                 for selector in &style.selectors.0 {
-                    let [Component::Class(class)] = selector.iter_raw_match_order().as_slice()
-                    else {
-                        continue;
+                    let (class, condition) = match selector.iter_raw_match_order().as_slice() {
+                        [Component::Class(class)] => (class, Condition::Base),
+                        [
+                            Component::Class(class),
+                            Component::NonTSPseudoClass(PseudoClass::Hover),
+                        ]
+                        | [
+                            Component::NonTSPseudoClass(PseudoClass::Hover),
+                            Component::Class(class),
+                        ] => (class, Condition::Hover),
+                        _ => continue,
                     };
 
                     let mut declarations = Vec::new();
@@ -93,7 +119,7 @@ pub(super) fn parse(source: &str) -> Result<Vec<CollectedBlock>, JsError> {
                         let name = property
                             .property_id()
                             .to_css_string(PrinterOptions::default())?;
-                        declarations.push(Declaration::new(property, name)?);
+                        declarations.push(Declaration::new(property, name, condition)?);
                     }
                     blocks.push(CollectedBlock::Class {
                         name: class.0.to_string(),
@@ -129,7 +155,11 @@ pub(super) fn parse(source: &str) -> Result<Vec<CollectedBlock>, JsError> {
                     let CustomPropertyName::Custom(name) = &custom.name else {
                         continue;
                     };
-                    declarations.push(Declaration::new(property, name.0.to_string())?);
+                    declarations.push(Declaration::new(
+                        property,
+                        name.0.to_string(),
+                        Condition::Base,
+                    )?);
                 }
                 blocks.push(CollectedBlock::Tokens {
                     name: name.to_string(),
