@@ -2,4 +2,4 @@
 "@csx-style/vite": patch
 ---
 
-refactor(vite): remove csx directive replacing in favour of postcss
+The vite plugin is no longer responsible for replacing `@csx` directives with compiled css, this is the job of the postcss plugin
