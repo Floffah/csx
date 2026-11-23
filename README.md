@@ -66,3 +66,10 @@ bun --filter @csx-style/example-vite-react dev
 
 See the [React example](./examples/vite-react) for the full setup, including
 [TypeScript configuration](./examples/vite-react/tsconfig.json).
+
+The [Next.js App Router example](./examples/next) uses the [Next.js adapter](./packages/next) and the PostCSS plugin. Build and run it from the repo root.
+
+```sh
+bun run build --filter=@csx-style/example-next
+bun --filter @csx-style/example-next start
+```

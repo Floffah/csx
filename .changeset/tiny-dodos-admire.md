@@ -2,4 +2,4 @@
 "@csx-style/postcss": patch
 ---
 
-introduce postcss-based css transpiling
+feat(postcss): introduce postcss-based css transpiling

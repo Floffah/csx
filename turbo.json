@@ -14,6 +14,10 @@
         "@csx-style/compiler#build": {
             "outputs": ["dist/**", "wasm/**"]
         },
+        "@csx-style/example-next#build": {
+            "dependsOn": ["^build"],
+            "outputs": [".next/**", "!.next/cache/**", ".csx/types/**"]
+        },
         "test": {
             "dependsOn": ["build"],
             "cache": false

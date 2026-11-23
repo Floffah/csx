@@ -1,0 +1,34 @@
+{
+    "name": "@csx-style/next",
+    "version": "0.0.1-alpha.1",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Floffah/csx.git",
+        "directory": "packages/next"
+    },
+    "type": "module",
+    "files": [
+        "dist"
+    ],
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.cts",
+            "default": "./dist/index.cjs"
+        }
+    },
+    "scripts": {
+        "build": "tsdown",
+        "test": "bun test ./tests"
+    },
+    "engines": {
+        "node": "^20.19.0 || >=22.12.0"
+    },
+    "dependencies": {
+        "@csx-style/compiler": "0.0.1-alpha.1",
+        "magic-string": "^0.30.21",
+        "oxc-parser": "^0.159.0"
+    },
+    "peerDependencies": {
+        "next": "^16.0.0"
+    }
+}

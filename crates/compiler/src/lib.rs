@@ -174,6 +174,11 @@ impl JsCompiler {
         Ok(result)
     }
 
+    #[wasm_bindgen(js_name = removeModule)]
+    pub fn remove_module(&mut self, id: &str) {
+        self.modules.remove(id);
+    }
+
     pub fn emit(&self, module_ids: Option<Vec<String>>) -> Result<String, JsError> {
         let modules: Vec<_> = match &module_ids {
             Some(ids) => ids

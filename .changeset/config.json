@@ -7,7 +7,8 @@
             "@csx-style/compiler",
             "@csx-style/core",
             "@csx-style/vite",
-            "@csx-style/postcss"
+            "@csx-style/postcss",
+            "@csx-style/next"
         ]
     ],
     "privatePackages": false
