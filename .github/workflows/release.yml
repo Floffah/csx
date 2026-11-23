@@ -59,12 +59,4 @@ jobs:
                   tool: wasm-pack@0.15.1
             - run: bun install --frozen-lockfile
             - run: bun run build --filter='./packages/*'
-            - name: Select npm dist-tag
-              id: channel
-              # Changesets can default to latest when npm only has prereleases.
-              run: |
-                  tag=$(node -p 'require("./packages/csx/package.json").version.split("-")[1]?.split(".")[0] ?? "latest"')
-                  printf 'tag=%s\n' "$tag" >> "$GITHUB_OUTPUT"
             - uses: changesets/action/publish@v2
-              with:
-                  script: bun run changeset publish --tag ${{ steps.channel.outputs.tag }}
