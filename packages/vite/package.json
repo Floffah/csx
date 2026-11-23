@@ -1,6 +1,6 @@
 {
     "name": "@csx-style/vite",
-    "version": "0.0.1-alpha.0",
+    "version": "0.0.1-alpha.1",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/Floffah/csx.git",
@@ -20,7 +20,7 @@
         "build": "tsdown"
     },
     "dependencies": {
-        "@csx-style/compiler": "0.0.1-alpha.0",
+        "@csx-style/compiler": "0.0.1-alpha.1",
         "postcss": "^8.5.32"
     },
     "peerDependencies": {
