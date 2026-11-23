@@ -13,7 +13,7 @@ export interface Options {
 export default function csx({ root = process.cwd() }: Options = {}): Plugin {
     return {
         postcssPlugin: pluginName,
-        async Once(stylesheet, { result }) {
+        async Once(stylesheet, { postcss, result }) {
             const parent = result.opts.from;
             if (parent?.endsWith(".x.css")) return;
 
@@ -65,9 +65,15 @@ export default function csx({ root = process.cwd() }: Options = {}): Plugin {
                     });
                 }
 
-                const css = compiler.emit();
+                const generated = postcss.parse(compiler.emit(), {
+                    from: parent,
+                });
                 for (const directive of directives) {
-                    directive.replaceWith(css);
+                    const replacement = generated.clone();
+                    replacement.walk((node) => {
+                        node.source = directive.source;
+                    });
+                    directive.replaceWith(replacement);
                 }
             } finally {
                 compiler.free();

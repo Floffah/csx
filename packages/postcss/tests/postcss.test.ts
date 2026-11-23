@@ -55,6 +55,14 @@ test("expands @csx from the current file set and reports dependencies", async ()
             })),
         ]);
 
+        const repeated = await processor.process("@csx;\n@csx;", { from });
+        const origins: number[] = [];
+        repeated.root.walkRules((rule) => {
+            expect(rule.source?.input.file).toBe(from);
+            origins.push(rule.source?.start?.line ?? 0);
+        });
+        expect(origins).toEqual([1, 1, 2, 2]);
+
         await writeFile(first, ".first { color: green }");
         await rm(second);
         const updated = await process();

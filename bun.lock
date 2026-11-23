@@ -38,7 +38,9 @@
     "examples/vite-js": {
       "name": "@csx-style/example-vite-js",
       "devDependencies": {
+        "@csx-style/postcss": "workspace:*",
         "@csx-style/vite": "workspace:*",
+        "postcss": "^8.5.32",
         "vite": "^8.3.7",
       },
     },
@@ -51,9 +53,11 @@
       },
       "devDependencies": {
         "@csx-style/compiler": "workspace:*",
+        "@csx-style/postcss": "workspace:*",
         "@csx-style/vite": "workspace:*",
         "@types/react": "^19.3.0",
         "@types/react-dom": "^19.3.0",
+        "postcss": "^8.5.32",
         "vite": "^8.3.7",
       },
     },

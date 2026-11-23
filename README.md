@@ -6,7 +6,7 @@ design systems through variables and themes. See an example of what it csx might
 
 ## Quick start
 
-In a Vite app, add the CSX plugin to your vite c onfig.
+In a Vite app, add the CSX plugin to your vite config.
 
 ```js
 import csx from "@csx-style/vite";
@@ -15,8 +15,21 @@ import { defineConfig } from "vite";
 export default defineConfig({ plugins: [csx()] });
 ```
 
+Install `@csx-style/postcss` and `postcss`, then add the CSX plugin to your PostCSS config. Vite and Next.js use the same PostCSS setup.
+
+```js
+// postcss.config.mjs
+export default {
+    plugins: {
+        "@csx-style/postcss": {},
+    },
+};
+```
+
 Put `@csx;` in a regular stylesheet, such as `styles.css`, and import that file
-in your app entry point. Vite replaces the directive with the generated CSS.
+in your app entry point. The PostCSS plugin replaces the directive with the generated CSS.
+
+For TypeScript, enable `allowArbitraryExtensions` and add `.csx/types` to `rootDirs` alongside your project source root. The Vite plugin generates mapped declarations when a component imports a CSX stylesheet.
 
 Write styles in `Button.x.css`.
 

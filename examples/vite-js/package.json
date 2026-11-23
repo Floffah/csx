@@ -8,7 +8,9 @@
         "test": "bun test"
     },
     "devDependencies": {
+        "@csx-style/postcss": "workspace:*",
         "@csx-style/vite": "workspace:*",
+        "postcss": "^8.5.32",
         "vite": "^8.3.7"
     }
 }
