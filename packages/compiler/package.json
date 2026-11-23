@@ -1,7 +1,11 @@
 {
     "name": "@csx-style/compiler",
-    "version": "0.0.0",
-    "private": true,
+    "version": "0.0.1-alpha.0",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Floffah/csx.git",
+        "directory": "packages/compiler"
+    },
     "type": "module",
     "files": [
         "dist"

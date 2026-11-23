@@ -1,0 +1,7 @@
+{
+    "$schema": "https://unpkg.com/@changesets/config@4.0.1/schema.json",
+    "access": "public",
+    "changelog": "@changesets/cli/changelog",
+    "fixed": [["@csx-style/compiler", "@csx-style/core", "@csx-style/vite"]],
+    "privatePackages": false
+}

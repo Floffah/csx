@@ -10,6 +10,7 @@
         "build": "turbo run build",
         "build:ts": "turbo run build",
         "build:rust": "cargo build --workspace",
+        "version:packages": "changeset version && bun install --lockfile-only",
         "typecheck": "turbo run typecheck:ts",
         "typecheck:ts": "tsc --noEmit",
         "test": "turbo run test test:rust",
@@ -20,6 +21,7 @@
         "check:rust": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings"
     },
     "devDependencies": {
+        "@changesets/cli": "3.0.3",
         "@ianvs/prettier-plugin-sort-imports": "4.7.1",
         "@types/bun": "^1.4.4",
         "postcss": "^8.5.32",
