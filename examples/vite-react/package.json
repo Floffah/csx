@@ -1,5 +1,5 @@
 {
-    "name": "@csx/example-vite-react",
+    "name": "@csx-style/example-vite-react",
     "private": true,
     "type": "module",
     "scripts": {
@@ -9,15 +9,15 @@
         "test": "bun test"
     },
     "dependencies": {
-        "@csx/csx": "workspace:*",
+        "@csx-style/core": "workspace:*",
         "react": "^19.3.1",
         "react-dom": "^19.3.1"
     },
     "devDependencies": {
         "@types/react": "^19.3.0",
         "@types/react-dom": "^19.3.0",
-        "@csx/compiler": "workspace:*",
-        "@csx/vite": "workspace:*",
+        "@csx-style/compiler": "workspace:*",
+        "@csx-style/vite": "workspace:*",
         "vite": "^8.3.7"
     }
 }

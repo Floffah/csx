@@ -11,7 +11,7 @@
             "dependsOn": ["^build"],
             "outputs": ["dist/**"]
         },
-        "@csx/compiler#build": {
+        "@csx-style/compiler#build": {
             "outputs": ["dist/**", "wasm/**"]
         },
         "test": {
@@ -19,7 +19,7 @@
             "cache": false
         },
         "//#typecheck:ts": {
-            "dependsOn": ["@csx/compiler#build"],
+            "dependsOn": ["@csx-style/compiler#build"],
             "cache": false
         },
         "//#check:rust": {

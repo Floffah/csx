@@ -1,5 +1,5 @@
 {
-    "name": "csx-workspace",
+    "name": "csx-style-workspace",
     "private": true,
     "type": "module",
     "workspaces": [

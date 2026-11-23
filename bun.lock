@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "csx-workspace",
+      "name": "csx-style-workspace",
       "devDependencies": {
         "@ianvs/prettier-plugin-sort-imports": "4.7.1",
         "@types/bun": "^1.4.4",
@@ -17,46 +17,46 @@
       },
     },
     "examples/vite-js": {
-      "name": "@csx/example-vite-js",
+      "name": "@csx-style/example-vite-js",
       "devDependencies": {
-        "@csx/vite": "workspace:*",
+        "@csx-style/vite": "workspace:*",
         "vite": "^8.3.7",
       },
     },
     "examples/vite-react": {
-      "name": "@csx/example-vite-react",
+      "name": "@csx-style/example-vite-react",
       "dependencies": {
-        "@csx/csx": "workspace:*",
+        "@csx-style/core": "workspace:*",
         "react": "^19.3.1",
         "react-dom": "^19.3.1",
       },
       "devDependencies": {
-        "@csx/compiler": "workspace:*",
-        "@csx/vite": "workspace:*",
+        "@csx-style/compiler": "workspace:*",
+        "@csx-style/vite": "workspace:*",
         "@types/react": "^19.3.0",
         "@types/react-dom": "^19.3.0",
         "vite": "^8.3.7",
       },
     },
     "packages/compiler": {
-      "name": "@csx/compiler",
+      "name": "@csx-style/compiler",
       "version": "0.0.0",
       "dependencies": {
         "@jridgewell/sourcemap-codec": "^1.6.0",
       },
     },
     "packages/csx": {
-      "name": "@csx/csx",
+      "name": "@csx-style/core",
       "version": "0.0.0",
       "dependencies": {
         "clsx": "^2.1.1",
       },
     },
     "packages/vite": {
-      "name": "@csx/vite",
+      "name": "@csx-style/vite",
       "version": "0.0.0",
       "dependencies": {
-        "@csx/compiler": "workspace:*",
+        "@csx-style/compiler": "workspace:*",
         "postcss": "^8.5.32",
       },
       "peerDependencies": {
@@ -83,15 +83,15 @@
 
     "@babel/types": ["@babel/types@7.29.11", "", { "dependencies": { "@babel/helper-string-parser": "^7.29.11", "@babel/helper-validator-identifier": "^7.29.7" } }, "sha512-WCsemW40Cpc6gouC1SrY6PBaZ+oLRlEVY9XBvZBI7il/HyUrb2nJ505wE1MHEFyDZNnrWDEuy4jL50WVHfTTSQ=="],
 
-    "@csx/compiler": ["@csx/compiler@workspace:packages/compiler"],
+    "@csx-style/compiler": ["@csx-style/compiler@workspace:packages/compiler"],
 
-    "@csx/csx": ["@csx/csx@workspace:packages/csx"],
+    "@csx-style/core": ["@csx-style/core@workspace:packages/csx"],
 
-    "@csx/example-vite-js": ["@csx/example-vite-js@workspace:examples/vite-js"],
+    "@csx-style/example-vite-js": ["@csx-style/example-vite-js@workspace:examples/vite-js"],
 
-    "@csx/example-vite-react": ["@csx/example-vite-react@workspace:examples/vite-react"],
+    "@csx-style/example-vite-react": ["@csx-style/example-vite-react@workspace:examples/vite-react"],
 
-    "@csx/vite": ["@csx/vite@workspace:packages/vite"],
+    "@csx-style/vite": ["@csx-style/vite@workspace:packages/vite"],
 
     "@emnapi/core": ["@emnapi/core@2.0.0-beta.2", "", { "dependencies": { "@emnapi/wasi-threads": "2.2.0", "tslib": "^2.4.0" } }, "sha512-MzCVoWtcg4Pm2B3je5mMvYMvj3MmBKw+fU7vbsJc9/iT8ip6/eYIHo/Dsm/mr+wsHB6SEyJDuxB09Yy6r/8+4A=="],
 

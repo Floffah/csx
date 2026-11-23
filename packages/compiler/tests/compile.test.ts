@@ -7,7 +7,7 @@ import {
     type CompileModuleResult,
     type CompilerOptions,
     type Diagnostic,
-} from "@csx/compiler";
+} from "@csx-style/compiler";
 import { decode } from "@jridgewell/sourcemap-codec";
 import { expect, test } from "bun:test";
 
@@ -49,7 +49,7 @@ test("exports hashed class properties", () => {
         );
         expect(emitDeclarations(result)).toBe(
             [
-                'import type { CSXStyle } from "@csx/csx";',
+                'import type { CSXStyle } from "@csx-style/core";',
                 "",
                 "declare const styles: {",
                 '    readonly "button": CSXStyle;',

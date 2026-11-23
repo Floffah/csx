@@ -1,7 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join, relative, sep } from "node:path";
-import { Compiler, emitMappedDeclarations, emitModule } from "@csx/compiler";
+import {
+    Compiler,
+    emitMappedDeclarations,
+    emitModule,
+} from "@csx-style/compiler";
 import postcss, { type AtRule } from "postcss";
 import { normalizePath, type Environment, type Plugin } from "vite";
 

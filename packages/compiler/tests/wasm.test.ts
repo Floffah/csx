@@ -10,7 +10,7 @@ test.each(["node", "bun"])(
                 "--input-type=module",
                 "-e",
                 `
-    import { Compiler } from '@csx/compiler';
+    import { Compiler } from '@csx-style/compiler';
     const compiler = new Compiler({
       resolve: async () => '/theme.x.css',
       load: async () => '',

@@ -26,7 +26,7 @@ export function emitDeclarations({
 }
 
 const declarationHeader = [
-    'import type { CSXStyle } from "@csx/csx";',
+    'import type { CSXStyle } from "@csx-style/core";',
     "",
     "declare const styles: {",
 ];

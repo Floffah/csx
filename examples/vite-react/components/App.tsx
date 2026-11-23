@@ -1,4 +1,4 @@
-import { props } from "@csx/csx";
+import { props } from "@csx-style/core";
 import React, { useState } from "react";
 
 import styles from "./App.x.css";

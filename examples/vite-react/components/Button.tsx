@@ -1,4 +1,4 @@
-import { props } from "@csx/csx";
+import { props } from "@csx-style/core";
 import React, { type ReactNode } from "react";
 
 import styles from "./Button.x.css";

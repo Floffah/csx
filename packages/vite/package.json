@@ -1,5 +1,5 @@
 {
-    "name": "@csx/vite",
+    "name": "@csx-style/vite",
     "version": "0.0.0",
     "private": true,
     "type": "module",
@@ -16,7 +16,7 @@
         "build": "tsdown"
     },
     "dependencies": {
-        "@csx/compiler": "workspace:*",
+        "@csx-style/compiler": "workspace:*",
         "postcss": "^8.5.32"
     },
     "peerDependencies": {

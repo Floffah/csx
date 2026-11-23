@@ -9,7 +9,7 @@ design systems through variables and themes. See an example of what it csx might
 In a Vite app, add the CSX plugin to your vite c onfig.
 
 ```js
-import csx from "@csx/vite";
+import csx from "@csx-style/vite";
 import { defineConfig } from "vite";
 
 export default defineConfig({ plugins: [csx()] });
@@ -34,7 +34,7 @@ Write styles in `Button.x.css`.
 Import the styles and spread the result of `props()` onto an element.
 
 ```jsx
-import { props } from "@csx/csx";
+import { props } from "@csx-style/core";
 import React from "react";
 
 import styles from "./Button.x.css";
@@ -60,8 +60,8 @@ With Bun, Rust, and `wasm-pack` installed, run these commands from the repo root
 
 ```sh
 bun install
-bun run build --filter=@csx/example-vite-react
-bun --filter @csx/example-vite-react dev
+bun run build --filter=@csx-style/example-vite-react
+bun --filter @csx-style/example-vite-react dev
 ```
 
 See the [React example](./examples/vite-react) for the full setup, including

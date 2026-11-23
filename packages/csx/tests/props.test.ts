@@ -1,4 +1,4 @@
-import * as csx from "@csx/csx";
+import * as csx from "@csx-style/core";
 import { expect, test } from "bun:test";
 
 test("keeps the last atom for each property", () => {

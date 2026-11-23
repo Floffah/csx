@@ -1,4 +1,4 @@
-import csx from "@csx/vite";
+import csx from "@csx-style/vite";
 import { defineConfig } from "vite";
 
 export default defineConfig({

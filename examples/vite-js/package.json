@@ -1,5 +1,5 @@
 {
-    "name": "@csx/example-vite-js",
+    "name": "@csx-style/example-vite-js",
     "private": true,
     "type": "module",
     "scripts": {
@@ -8,7 +8,7 @@
         "test": "bun test"
     },
     "devDependencies": {
-        "@csx/vite": "workspace:*",
+        "@csx-style/vite": "workspace:*",
         "vite": "^8.3.7"
     }
 }
