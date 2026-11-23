@@ -1,0 +1,36 @@
+{
+    "name": "@csx-style/postcss",
+    "version": "0.0.1-alpha.1",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Floffah/csx.git",
+        "directory": "packages/postcss"
+    },
+    "type": "module",
+    "files": [
+        "dist"
+    ],
+    "exports": {
+        ".": {
+            "import": {
+                "types": "./dist/index.d.mts",
+                "default": "./dist/index.mjs"
+            },
+            "require": {
+                "types": "./dist/index.d.cts",
+                "default": "./dist/index.cjs"
+            }
+        }
+    },
+    "scripts": {
+        "build": "tsdown",
+        "test": "bun test ./tests"
+    },
+    "dependencies": {
+        "@csx-style/compiler": "0.0.1-alpha.1",
+        "tinyglobby": "^0.2.17"
+    },
+    "peerDependencies": {
+        "postcss": "^8.5.32"
+    }
+}

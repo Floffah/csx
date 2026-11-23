@@ -53,6 +53,17 @@
         "clsx": "^2.1.1",
       },
     },
+    "packages/postcss": {
+      "name": "@csx-style/postcss",
+      "version": "0.0.1-alpha.1",
+      "dependencies": {
+        "@csx-style/compiler": "0.0.1-alpha.1",
+        "tinyglobby": "^0.2.17",
+      },
+      "peerDependencies": {
+        "postcss": "^8.5.32",
+      },
+    },
     "packages/vite": {
       "name": "@csx-style/vite",
       "version": "0.0.1-alpha.1",
@@ -125,6 +136,8 @@
     "@csx-style/example-vite-js": ["@csx-style/example-vite-js@workspace:examples/vite-js"],
 
     "@csx-style/example-vite-react": ["@csx-style/example-vite-react@workspace:examples/vite-react"],
+
+    "@csx-style/postcss": ["@csx-style/postcss@workspace:packages/postcss"],
 
     "@csx-style/vite": ["@csx-style/vite@workspace:packages/vite"],
 
