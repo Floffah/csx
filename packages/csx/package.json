@@ -1,6 +1,6 @@
 {
     "name": "@csx-style/core",
-    "version": "0.0.1-alpha.2",
+    "version": "0.0.1",
     "description": "Combine CSX styles and apply them with props().",
     "license": "MIT",
     "repository": {

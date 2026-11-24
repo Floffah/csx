@@ -1,6 +1,6 @@
 {
     "name": "@csx-style/postcss",
-    "version": "0.0.1-alpha.2",
+    "version": "0.0.1",
     "description": "PostCSS plugin that expands @csx directives into CSS from CSX stylesheets.",
     "license": "MIT",
     "repository": {
@@ -29,7 +29,7 @@
         "test": "bun test ./tests"
     },
     "dependencies": {
-        "@csx-style/compiler": "0.0.1-alpha.2",
+        "@csx-style/compiler": "0.0.1",
         "tinyglobby": "^0.2.17"
     },
     "peerDependencies": {
