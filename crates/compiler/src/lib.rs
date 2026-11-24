@@ -75,7 +75,6 @@ pub enum JsDiagnosticSeverity {
 /// CSX Compiler, give me css and i will give you more css
 #[wasm_bindgen(js_name = Compiler)]
 pub struct JsCompiler {
-    options: JsCompilerOptions,
     modules: HashMap<String, HashMap<String, Declaration>>,
 }
 
@@ -83,11 +82,10 @@ pub struct JsCompiler {
 impl JsCompiler {
     #[wasm_bindgen(constructor)]
     pub fn new(options: Ts<JsCompilerOptions>) -> Result<JsCompiler, JsError> {
-        let options = options.to_rust()?;
-        return Ok(Self {
-            options,
+        options.to_rust()?;
+        Ok(Self {
             modules: HashMap::new(),
-        });
+        })
     }
 
     #[wasm_bindgen(js_name = compileModule)]
