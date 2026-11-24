@@ -1,109 +1,109 @@
 @layer csx.reset.unconditional.base, csx.reset.unconditional.hover;
 @layer csx.shorthand.unconditional.base {
-    .c06dc81d {
+    .cb06dc81dx {
         border: 0
     }
 
-    .c0dcb28d {
+    .c10dcb28dx {
         border: 1px solid #e2e8f0
     }
 
-    .ca04f808 {
+    .cda04f808x {
         font: inherit
     }
 
-    .c3cd89c3 {
+    .c33cd89c3x {
         border-radius: .75rem
     }
 
-    .ca729a99 {
+    .c3a729a99x {
         border-radius: 1.5rem
     }
 
-    .ccc59f08 {
+    .c7cc59f08x {
         margin: 0
     }
 
-    .c275e44d {
+    .c0275e44dx {
         padding: 2rem
     }
 
-    .c96b4523 {
+    .c096b4523x {
         padding: .75rem 1.25rem
     }
 
-    .c0a0b416 {
+    .c90a0b416x {
         gap: 1rem
     }
 }
 @layer csx.shorthand.unconditional.hover;
 @layer csx.longhand.unconditional.base {
-    .c3838b30 {
+    .c43838b30x {
         background-color: #4f46e5
     }
 
-    .ce84c75e {
+    .cbe84c75ex {
         background-color: #fff
     }
 
-    .c199c74c {
+    .c9199c74cx {
         box-shadow: 0 10px 24px #0f172a14
     }
 
-    .c27e02ca {
+    .c127e02cax {
         color: #475569
     }
 
-    .c2f72ba6 {
+    .c22f72ba6x {
         color: #fff
     }
 
-    .cef3cc46 {
+    .c3ef3cc46x {
         color: #4338ca
     }
 
-    .c0ddab4a {
+    .ce0ddab4ax {
         cursor: pointer
     }
 
-    .c7785fbd {
+    .ce7785fbdx {
         display: grid
     }
 
-    .c96c07e6 {
+    .cc96c07e6x {
         font-size: 4rem
     }
 
-    .c9dd6809 {
+    .cd9dd6809x {
         font-size: 1.25rem
     }
 
-    .c8e08ede {
+    .ca8e08edex {
         font-variant-numeric: tabular-nums
     }
 
-    .c6c8d082 {
+    .c76c8d082x {
         font-weight: 600
     }
 
-    .c7feabc1 {
+    .c77feabc1x {
         font-weight: 700
     }
 
-    .c4b60c17 {
+    .cc4b60c17x {
         justify-items: center
     }
 
-    .c1f870d8 {
+    .c71f870d8x {
         line-height: 1.1
     }
 
-    .c4146770 {
+    .cb4146770x {
         width: min(100%, 22rem)
     }
 }
 @layer csx.longhand.unconditional.hover {
-    .c7f703f2:hover {
+    .c67f703f2x:hover {
         background-color: #4338ca
     }
 }

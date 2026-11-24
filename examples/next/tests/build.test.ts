@@ -9,7 +9,7 @@ test("the App Router build emits HTML, CSS, and declarations for a CSX import", 
     );
     const classes =
         html.match(/<h1 class="([^"]+)">CSX with Next\.js<\/h1>/)?.[1] ?? "";
-    expect(classes).toMatch(/^c[\da-f]{7} c[\da-f]{7}$/);
+    expect(classes).toMatch(/^c[\da-f]{8}x c[\da-f]{8}x$/);
 
     const cssHref = html.match(/href="\/_next\/(static\/[^" ]+\.css)"/)?.[1];
     expect(cssHref).toBeDefined();

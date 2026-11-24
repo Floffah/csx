@@ -20,14 +20,14 @@ exports[`exports hashed class properties 1`] = `
   },
   "exports": {
     "button": {
-      ":hover:color": "c1ce20fa",
-      "color": "c0aecb60",
+      ":hover:color": "c71ce20fax",
+      "color": "cb0aecb60x",
     },
     "label": {
-      "color": "c0aecb60",
+      "color": "cb0aecb60x",
     },
     "link": {
-      "color": "c0aecb60",
+      "color": "cb0aecb60x",
     },
   },
   "variables": {

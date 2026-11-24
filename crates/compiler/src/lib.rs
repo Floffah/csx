@@ -136,7 +136,7 @@ impl JsCompiler {
                             suffix.hash(&mut hasher);
                             format!("{suffix}:{}", declaration.property)
                         };
-                        let atomic_class = format!("c{:07x}", hasher.finish() & 0x0fff_ffff);
+                        let atomic_class = format!("c{:08x}x", hasher.finish() & 0xffff_ffff);
 
                         let previous = atomic_declarations
                             .entry(atomic_class.clone())
