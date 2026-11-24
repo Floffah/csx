@@ -2,7 +2,7 @@
 
 mod parse;
 
-use parse::{CollectedBlock, Condition, Declaration, Layer};
+use parse::{ClassBlock, Condition, Declaration, Layer};
 use serde::{Deserialize, Serialize};
 use std::cmp::Reverse;
 use std::collections::{HashMap, HashSet};
@@ -42,8 +42,6 @@ pub struct JsCompileModuleResult {
     /// Export name -> preferred rule start (zero-based line and UTF-16 column).
     #[serde(rename = "exportLocations")]
     pub export_locations: HashMap<String, ExportLocation>,
-    /// Token block name -> token property name -> generated CSS variable name.
-    pub variables: HashMap<String, HashMap<String, String>>,
     /// Canonical IDs of modules this compilation depends on.
     pub dependencies: Vec<String>,
     #[tsify(type = "Diagnostic[]")]
@@ -104,62 +102,48 @@ impl JsCompiler {
         let mut atomic_declarations: HashMap<String, Declaration> = HashMap::new();
         let mut base_locations = HashSet::new();
 
-        for block in &blocks {
-            match block {
-                CollectedBlock::Class {
-                    name,
-                    condition,
-                    location,
-                    declarations,
-                } => {
-                    let position = ExportLocation {
-                        line: location.line,
-                        column: location.column - 1,
-                    };
-                    if *condition == Condition::Base && base_locations.insert(name) {
-                        result.export_locations.insert(name.clone(), position);
-                    } else {
-                        result
-                            .export_locations
-                            .entry(name.clone())
-                            .or_insert(position);
-                    }
-                    let exports = result.exports.entry(name.clone()).or_default();
-                    for declaration in declarations {
-                        let css = &declaration.css;
-                        let mut hasher = DefaultHasher::new();
-                        (&options.id, css).hash(&mut hasher);
-                        let key = if declaration.condition == Condition::Base {
-                            declaration.property.clone()
-                        } else {
-                            let suffix = declaration.condition.suffix();
-                            suffix.hash(&mut hasher);
-                            format!("{suffix}:{}", declaration.property)
-                        };
-                        let atomic_class = format!("c{:08x}x", hasher.finish() & 0xffff_ffff);
+        for ClassBlock {
+            name,
+            condition,
+            location,
+            declarations,
+        } in &blocks
+        {
+            let position = ExportLocation {
+                line: location.line,
+                column: location.column - 1,
+            };
+            if *condition == Condition::Base && base_locations.insert(name) {
+                result.export_locations.insert(name.clone(), position);
+            } else {
+                result
+                    .export_locations
+                    .entry(name.clone())
+                    .or_insert(position);
+            }
+            let exports = result.exports.entry(name.clone()).or_default();
+            for declaration in declarations {
+                let css = &declaration.css;
+                let mut hasher = DefaultHasher::new();
+                (&options.id, css).hash(&mut hasher);
+                let key = if declaration.condition == Condition::Base {
+                    declaration.property.clone()
+                } else {
+                    let suffix = declaration.condition.suffix();
+                    suffix.hash(&mut hasher);
+                    format!("{suffix}:{}", declaration.property)
+                };
+                let atomic_class = format!("c{:08x}x", hasher.finish() & 0xffff_ffff);
 
-                        let previous = atomic_declarations
-                            .entry(atomic_class.clone())
-                            .or_insert_with(|| declaration.clone());
-                        if *previous != *declaration {
-                            return Err(JsError::new(&format!(
-                                "Atomic class hash collision for {atomic_class}"
-                            )));
-                        }
-                        exports.insert(key, atomic_class);
-                    }
+                let previous = atomic_declarations
+                    .entry(atomic_class.clone())
+                    .or_insert_with(|| declaration.clone());
+                if *previous != *declaration {
+                    return Err(JsError::new(&format!(
+                        "Atomic class hash collision for {atomic_class}"
+                    )));
                 }
-                CollectedBlock::Tokens { name, declarations } => {
-                    let variables = result.variables.entry(name.clone()).or_default();
-                    for declaration in declarations {
-                        let mut hasher = DefaultHasher::new();
-                        declaration.css.hash(&mut hasher);
-                        variables.insert(
-                            declaration.property.clone(),
-                            format!("--c{:07x}", hasher.finish() & 0x0fff_ffff),
-                        );
-                    }
-                }
+                exports.insert(key, atomic_class);
             }
         }
 

@@ -22,16 +22,12 @@ test("exports hashed class properties", () => {
         const input: CompileModuleOptions = {
             id: "/src/styles.x.css",
             source: `
-            @tokens test {
-                --red: #FF0000;
-                --blue: #0000FF
-            }
-
             .button {
-                color: var(--test-red)
+                --accent: red;
+                color: var(--accent)
             }
             .link, .label {
-                color: var(--test-red)
+                color: var(--accent)
             }
             .button:hover {
                 color: blue
@@ -62,7 +58,10 @@ test("exports hashed class properties", () => {
         );
         const color = result.exports.button.color;
         expect(compiler.emit()).toContain(
-            `.${color} { color: var(--test-red); }`,
+            `.${color} { color: var(--accent); }`,
+        );
+        expect(compiler.emit()).toContain(
+            `.${result.exports.button["--accent"]} { --accent: red; }`,
         );
         expect(
             compiler.emit().match(new RegExp(`\\.${color} `, "g")),
@@ -84,7 +83,7 @@ test("maps exported classes to the start of their preferred CSS rule", () => {
             id: "/src/Button.x.css",
             source: [
                 ".button:hover, :hover.hover-only { color: red; }",
-                '/* 🦊 */ [data-name=".ignore"], .button,',
+                "/* 🦊 */ .button,",
                 ".link { color: blue; }",
                 ".button { color: green; }",
             ].join("\r\n"),
@@ -125,7 +124,6 @@ test("keeps base and hover atoms distinct and orders their layers", () => {
                 .button { color: red; }
                 .button:hover, :hover.link { color: red; }
                 .button:hover { color: blue; }
-                .button:hover:focus { color: green; }
             `,
         });
         const base = exports.button.color;
@@ -136,7 +134,6 @@ test("keeps base and hover atoms distinct and orders their layers", () => {
         expect(css).toContain(`.${base} { color: red; }`);
         expect(css).toContain(`.${hover}:hover { color: #00f; }`);
         expect(css).toContain(`.${linkHover}:hover { color: red; }`);
-        expect(css).not.toContain("color: green");
         expect(
             css.indexOf("@layer csx.longhand.unconditional.base {"),
         ).toBeLessThan(
@@ -188,7 +185,7 @@ test.each([
     ".button { color: red !important; }",
     ".button:hover { color: red !IMPORTANT; }",
     "@media (min-width: 500px) { .button { color: red !important; } }",
-    "@tokens palette { --color: red !important; }",
+    ".button { --accent: red !important; }",
 ])("rejects important declarations in %s", (source) => {
     const compiler = new Compiler({
         resolve: async () => "",
@@ -199,6 +196,42 @@ test.each([
         expect(() =>
             compiler.compileModule({ id: "/button.x.css", source }),
         ).toThrow("!important is not supported in CSX stylesheets");
+    } finally {
+        compiler.free();
+    }
+});
+
+test.each([
+    ["button { color: red; }", "Unsupported selector `button`"],
+    [
+        '.button, [data-name="link"] { color: red; }',
+        "Unsupported selector `[data-name=",
+    ],
+    [
+        ".button:hover:focus { color: red; }",
+        "Unsupported selector `.button:hover:focus`",
+    ],
+    [
+        ".button { color: red; &:hover { color: blue; } }",
+        "Nested rules are not supported",
+    ],
+    [
+        "@media (min-width: 500px) { .button { color: red; } }",
+        "Unsupported rule `@media`",
+    ],
+    ['@import "theme.css";', "Unsupported rule `@import`"],
+    ["@unknown;", "Unsupported rule `@unknown`"],
+    ["@tokens palette { --color: red; }", "Unsupported rule `@tokens`"],
+])("rejects unsupported syntax in %s", (source, message) => {
+    const compiler = new Compiler({
+        resolve: async () => "",
+        load: async () => "",
+    });
+
+    try {
+        expect(() =>
+            compiler.compileModule({ id: "/button.x.css", source }),
+        ).toThrow(message);
     } finally {
         compiler.free();
     }

@@ -7,33 +7,28 @@ exports[`exports hashed class properties 1`] = `
   "exportLocations": {
     "button": {
       "column": 12,
-      "line": 6,
+      "line": 1,
     },
     "label": {
       "column": 12,
-      "line": 9,
+      "line": 5,
     },
     "link": {
       "column": 12,
-      "line": 9,
+      "line": 5,
     },
   },
   "exports": {
     "button": {
+      "--accent": "c34d2cc8ex",
       ":hover:color": "c71ce20fax",
-      "color": "cb0aecb60x",
+      "color": "c44ed6e3fx",
     },
     "label": {
-      "color": "cb0aecb60x",
+      "color": "c44ed6e3fx",
     },
     "link": {
-      "color": "cb0aecb60x",
-    },
-  },
-  "variables": {
-    "test": {
-      "--blue": "--c8fbdbff",
-      "--red": "--c3f019fd",
+      "color": "c44ed6e3fx",
     },
   },
 }

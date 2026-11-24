@@ -1,27 +1,19 @@
 use lightningcss::declaration::DeclarationBlock;
 use lightningcss::printer::PrinterOptions;
-use lightningcss::properties::custom::{CustomPropertyName, Token, TokenOrValue};
 use lightningcss::properties::{Property, PropertyId};
 use lightningcss::rules::{CssRule, Location};
 use lightningcss::selector::PseudoClass;
 use lightningcss::stylesheet::{ParserOptions, StyleSheet};
 use lightningcss::traits::ToCss;
-use lightningcss::values::syntax::ParsedComponent;
 use lightningcss::visitor::{Visit, VisitTypes, Visitor};
 use parcel_selectors::parser::Component;
 use wasm_bindgen::JsError;
 
-pub(super) enum CollectedBlock {
-    Class {
-        name: String,
-        condition: Condition,
-        location: Location,
-        declarations: Vec<Declaration>,
-    },
-    Tokens {
-        name: String,
-        declarations: Vec<Declaration>,
-    },
+pub(super) struct ClassBlock {
+    pub(super) name: String,
+    pub(super) condition: Condition,
+    pub(super) location: Location,
+    pub(super) declarations: Vec<Declaration>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -94,7 +86,7 @@ impl<'i> Visitor<'i> for RejectImportant {
     }
 }
 
-pub(super) fn parse(source: &str) -> Result<Vec<CollectedBlock>, JsError> {
+pub(super) fn parse(source: &str) -> Result<Vec<ClassBlock>, JsError> {
     let mut sheet = StyleSheet::parse(source, ParserOptions::default())?;
     sheet.visit(&mut RejectImportant)?;
     let mut blocks = Vec::new();
@@ -102,6 +94,12 @@ pub(super) fn parse(source: &str) -> Result<Vec<CollectedBlock>, JsError> {
     for rule in sheet.rules.0 {
         match rule {
             CssRule::Style(style) => {
+                let line = style.loc.line + 1;
+                if !style.rules.0.is_empty() {
+                    return Err(JsError::new(&format!(
+                        "Nested rules are not supported in CSX stylesheets (line {line})"
+                    )));
+                }
                 for selector in &style.selectors.0 {
                     let (class, condition) = match selector.iter_raw_match_order().as_slice() {
                         [Component::Class(class)] => (class, Condition::Base),
@@ -113,7 +111,12 @@ pub(super) fn parse(source: &str) -> Result<Vec<CollectedBlock>, JsError> {
                             Component::NonTSPseudoClass(PseudoClass::Hover),
                             Component::Class(class),
                         ] => (class, Condition::Hover),
-                        _ => continue,
+                        _ => {
+                            let selector = selector.to_css_string(PrinterOptions::default())?;
+                            return Err(JsError::new(&format!(
+                                "Unsupported selector `{selector}` in CSX stylesheet (line {line}). Use a single class with an optional :hover."
+                            )));
+                        }
                     };
 
                     let mut declarations = Vec::new();
@@ -123,7 +126,7 @@ pub(super) fn parse(source: &str) -> Result<Vec<CollectedBlock>, JsError> {
                             .to_css_string(PrinterOptions::default())?;
                         declarations.push(Declaration::new(property, name, condition)?);
                     }
-                    blocks.push(CollectedBlock::Class {
+                    blocks.push(ClassBlock {
                         name: class.0.to_string(),
                         condition,
                         location: style.loc,
@@ -131,46 +134,17 @@ pub(super) fn parse(source: &str) -> Result<Vec<CollectedBlock>, JsError> {
                     });
                 }
             }
-            CssRule::Unknown(at_rule) if at_rule.name == "tokens" => {
-                let Some(TokenOrValue::Token(Token::Ident(name))) = at_rule.prelude.0.first()
-                else {
-                    continue;
-                };
-                let Some(block) = at_rule.block else {
-                    continue;
-                };
-                let css =
-                    ParsedComponent::TokenList(block).to_css_string(PrinterOptions::default())?;
-                let mut block = DeclarationBlock::parse_string(
-                    &css,
-                    ParserOptions {
-                        error_recovery: true,
-                        ..ParserOptions::default()
-                    },
-                )
-                .map_err(|error| JsError::new(&error.to_string()))?;
-                block.visit(&mut RejectImportant)?;
-
-                let mut declarations = Vec::new();
-                for property in &block.declarations {
-                    let Property::Custom(custom) = property else {
-                        continue;
-                    };
-                    let CustomPropertyName::Custom(name) = &custom.name else {
-                        continue;
-                    };
-                    declarations.push(Declaration::new(
-                        property,
-                        name.0.to_string(),
-                        Condition::Base,
-                    )?);
-                }
-                blocks.push(CollectedBlock::Tokens {
-                    name: name.to_string(),
-                    declarations,
-                });
+            rule => {
+                let css = rule.to_css_string(PrinterOptions::default())?;
+                let name = css
+                    .split(|c: char| c.is_whitespace() || c == '{' || c == ';')
+                    .next()
+                    .filter(|name| !name.is_empty())
+                    .unwrap_or("rule");
+                return Err(JsError::new(&format!(
+                    "Unsupported rule `{name}` in CSX stylesheet"
+                )));
             }
-            _ => (),
         }
     }
 

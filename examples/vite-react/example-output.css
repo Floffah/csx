@@ -1,110 +1,110 @@
 @layer csx.reset.unconditional.base, csx.reset.unconditional.hover;
 @layer csx.shorthand.unconditional.base {
     .cb06dc81dx {
-        border: 0
+        border: 0;
     }
 
     .c10dcb28dx {
-        border: 1px solid #e2e8f0
+        border: 1px solid #e2e8f0;
     }
 
     .cda04f808x {
-        font: inherit
+        font: inherit;
     }
 
     .c33cd89c3x {
-        border-radius: .75rem
+        border-radius: 0.75rem;
     }
 
     .c3a729a99x {
-        border-radius: 1.5rem
+        border-radius: 1.5rem;
     }
 
     .c7cc59f08x {
-        margin: 0
+        margin: 0;
     }
 
     .c0275e44dx {
-        padding: 2rem
+        padding: 2rem;
     }
 
     .c096b4523x {
-        padding: .75rem 1.25rem
+        padding: 0.75rem 1.25rem;
     }
 
     .c90a0b416x {
-        gap: 1rem
+        gap: 1rem;
     }
 }
 @layer csx.shorthand.unconditional.hover;
 @layer csx.longhand.unconditional.base {
     .c43838b30x {
-        background-color: #4f46e5
+        background-color: #4f46e5;
     }
 
     .cbe84c75ex {
-        background-color: #fff
+        background-color: #fff;
     }
 
     .c9199c74cx {
-        box-shadow: 0 10px 24px #0f172a14
+        box-shadow: 0 10px 24px #0f172a14;
     }
 
     .c127e02cax {
-        color: #475569
+        color: #475569;
     }
 
     .c22f72ba6x {
-        color: #fff
+        color: #fff;
     }
 
     .c3ef3cc46x {
-        color: #4338ca
+        color: #4338ca;
     }
 
     .ce0ddab4ax {
-        cursor: pointer
+        cursor: pointer;
     }
 
     .ce7785fbdx {
-        display: grid
+        display: grid;
     }
 
     .cc96c07e6x {
-        font-size: 4rem
+        font-size: 4rem;
     }
 
     .cd9dd6809x {
-        font-size: 1.25rem
+        font-size: 1.25rem;
     }
 
     .ca8e08edex {
-        font-variant-numeric: tabular-nums
+        font-variant-numeric: tabular-nums;
     }
 
     .c76c8d082x {
-        font-weight: 600
+        font-weight: 600;
     }
 
     .c77feabc1x {
-        font-weight: 700
+        font-weight: 700;
     }
 
     .cc4b60c17x {
-        justify-items: center
+        justify-items: center;
     }
 
     .c71f870d8x {
-        line-height: 1.1
+        line-height: 1.1;
     }
 
     .cb4146770x {
-        width: min(100%, 22rem)
+        width: min(100%, 22rem);
     }
 }
 @layer csx.longhand.unconditional.hover {
     .c67f703f2x:hover {
-        background-color: #4338ca
+        background-color: #4338ca;
     }
 }
 
@@ -116,15 +116,15 @@ body {
     margin: 0;
     padding: 1rem;
     font-family: system-ui, sans-serif;
-    display: grid
+    display: grid;
 }
 
 * {
-    box-sizing: border-box
+    box-sizing: border-box;
 }
 
 #root {
     justify-items: center;
     width: 100%;
-    display: grid
+    display: grid;
 }
