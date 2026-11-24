@@ -1,6 +1,8 @@
 {
     "name": "@csx-style/vite",
     "version": "0.0.1-alpha.1",
+    "description": "Import CSX stylesheets in Vite apps.",
+    "license": "MIT",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/Floffah/csx.git",

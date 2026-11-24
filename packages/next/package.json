@@ -1,6 +1,8 @@
 {
     "name": "@csx-style/next",
     "version": "0.0.1-alpha.1",
+    "description": "Use CSX stylesheets in Next.js apps with Turbopack.",
+    "license": "MIT",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/Floffah/csx.git",

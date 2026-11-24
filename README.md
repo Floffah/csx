@@ -2,20 +2,59 @@
 
 CSX is a styling library like css-modules for writing CSS in a more traditional
 style, but with the benefits of atomic css and compiler-driven precedence similar to StyleX. It supports
-design systems through variables and themes. See an example of what it csx might output in [the vite example](./examples/vite-react/example-output.css)
+design systems through variables and themes. See an example of what it csx might output in [the vite example](./examples/vite-react/example-output.css).
 
-## Quick start
+Write styles in CSS and use them from JavaScript or TypeScript. When you combine styles with `props()`, the order you pass them in determines which style wins for each property.
 
-In a Vite app, add the CSX plugin to your vite config.
+## 1. Set up your build tool
+
+Choose the instructions for your app.
+
+### Next.js
+
+Use Next.js 16 with the App Router and the default Turbopack bundler. Use Node.js 20.19 or later on the 20.x line, or Node.js 22.12 or later.
+
+```sh
+npm install @csx-style/core @csx-style/next
+```
+
+Wrap your existing Next.js configuration with `withCsx(nextConfig)`. If you have no options to pass, use `withCsx()`.
 
 ```js
+// next.config.mjs
+import withCsx from "@csx-style/next";
+
+export default withCsx();
+```
+
+### Vite
+
+Use Vite 8.3.7 or later in the 8.x line.
+
+```sh
+npm install @csx-style/core
+npm install -D @csx-style/vite
+```
+
+Add `csx()` to the plugins in your Vite config.
+
+```js
+// vite.config.mjs
 import csx from "@csx-style/vite";
 import { defineConfig } from "vite";
 
 export default defineConfig({ plugins: [csx()] });
 ```
 
-Install `@csx-style/postcss` and `postcss`, then add the CSX plugin to your PostCSS config. Vite and Next.js use the same PostCSS setup.
+## 2. Add the PostCSS plugin
+
+Next.js and Vite use the same PostCSS setup.
+
+```sh
+npm install -D @csx-style/postcss postcss
+```
+
+Add the plugin to your existing PostCSS config or create one in your app directory.
 
 ```js
 // postcss.config.mjs
@@ -26,12 +65,24 @@ export default {
 };
 ```
 
-Put `@csx;` in a regular stylesheet, such as `styles.css`, and import that file
-in your app entry point. The PostCSS plugin replaces the directive with the generated CSS.
+## 3. Load the CSX styles
 
-For TypeScript, enable `allowArbitraryExtensions` and add `.csx/types` to `rootDirs` alongside your project source root. The Vite plugin generates mapped declarations when a component imports a CSX stylesheet.
+Add `@csx;` to a regular stylesheet, such as `globals.css`. This is where the generated CSS appears.
 
-Write styles in `Button.x.css`.
+```css
+/* globals.css */
+@csx;
+```
+
+Import the stylesheet once from your Next.js root layout or Vite app entry point. If your app already imports a global stylesheet there, add the directive to that file.
+
+```js
+import "./globals.css";
+```
+
+## 4. Write and use a CSX style
+
+Create a file named `Button.x.css`.
 
 ```css
 .button {
@@ -44,11 +95,10 @@ Write styles in `Button.x.css`.
 }
 ```
 
-Import the styles and spread the result of `props()` onto an element.
+Import the stylesheet and pass the styles you want to `props()`.
 
 ```jsx
 import { props } from "@csx-style/core";
-import React from "react";
 
 import styles from "./Button.x.css";
 
@@ -64,25 +114,25 @@ export function Button({ primary }) {
 }
 ```
 
-When two styles set the same property, the later argument to `props()` wins.
-Here, `primary` changes the background and keeps the padding from `button`.
+When `primary` is true, the later style overrides the background color and the button keeps its padding. For plain JavaScript, assign `props(styles.button).className` to the element's `className`.
 
-## Run the example
+## TypeScript
 
-With Bun, Rust, and `wasm-pack` installed, run these commands from the repo root.
+Add these compiler options to the TypeScript config that covers your app code. If you already use `rootDirs`, add `.csx/types` alongside your existing roots. The paths below assume the config is in the app root.
 
-```sh
-bun install
-bun run build --filter=@csx-style/example-vite-react
-bun --filter @csx-style/example-vite-react dev
+```json
+{
+    "compilerOptions": {
+        "allowArbitraryExtensions": true,
+        "rootDirs": [".", ".csx/types"]
+    }
+}
 ```
 
-See the [React example](./examples/vite-react) for the full setup, including
-[TypeScript configuration](./examples/vite-react/tsconfig.json).
+Run your dev server and open the page that imports the `.x.css` file to generate its types. Add `.csx/types/` to `.gitignore`.
 
-The [Next.js App Router example](./examples/next) uses the [Next.js adapter](./packages/next) and the PostCSS plugin. Build and run it from the repo root.
+## Examples
 
-```sh
-bun run build --filter=@csx-style/example-next
-bun --filter @csx-style/example-next start
-```
+- [Next.js App Router](https://github.com/Floffah/csx/tree/main/examples/next)
+- [Vite with React](https://github.com/Floffah/csx/tree/main/examples/vite-react)
+- [Vite with plain JavaScript](https://github.com/Floffah/csx/tree/main/examples/vite-js)

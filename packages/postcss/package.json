@@ -1,6 +1,8 @@
 {
     "name": "@csx-style/postcss",
     "version": "0.0.1-alpha.1",
+    "description": "PostCSS plugin that expands @csx directives into CSS from CSX stylesheets.",
+    "license": "MIT",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/Floffah/csx.git",

@@ -59,4 +59,11 @@ jobs:
                   tool: wasm-pack@0.15.1
             - run: bun install --frozen-lockfile
             - run: bun run build --filter='./packages/*'
+            - name: Include package documentation and licenses
+              run: |
+                  unlink packages/csx/README.md
+                  cp README.md packages/csx/README.md
+                  for package in packages/*/package.json; do
+                      cp LICENSE "${package%/*}/LICENSE"
+                  done
             - uses: changesets/action/publish@v2
