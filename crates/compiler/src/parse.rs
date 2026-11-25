@@ -2,11 +2,11 @@ use lightningcss::declaration::DeclarationBlock;
 use lightningcss::printer::PrinterOptions;
 use lightningcss::properties::{Property, PropertyId};
 use lightningcss::rules::{CssRule, CssRuleList, Location};
-use lightningcss::selector::PseudoClass;
+use lightningcss::selector::PseudoClass::{Focus, FocusVisible, Hover};
 use lightningcss::stylesheet::{ParserOptions, StyleSheet};
 use lightningcss::traits::ToCss;
 use lightningcss::visitor::{Visit, VisitTypes, Visitor};
-use parcel_selectors::parser::Component;
+use parcel_selectors::parser::Component::{Class, NonTSPseudoClass};
 use wasm_bindgen::JsError;
 
 pub(super) struct ClassBlock {
@@ -34,6 +34,8 @@ pub(super) enum Layer {
 pub(super) enum Condition {
     Base,
     Hover,
+    Focus,
+    FocusVisible,
 }
 
 impl Condition {
@@ -41,6 +43,8 @@ impl Condition {
         match self {
             Self::Base => "",
             Self::Hover => ":hover",
+            Self::Focus => ":focus",
+            Self::FocusVisible => ":focus-visible",
         }
     }
 }
@@ -132,19 +136,19 @@ fn parse_rules(
                 });
                 for selector in &style.selectors.0 {
                     let (class, condition) = match selector.iter_raw_match_order().as_slice() {
-                        [Component::Class(class)] => (class, Condition::Base),
-                        [
-                            Component::Class(class),
-                            Component::NonTSPseudoClass(PseudoClass::Hover),
-                        ]
-                        | [
-                            Component::NonTSPseudoClass(PseudoClass::Hover),
-                            Component::Class(class),
-                        ] => (class, Condition::Hover),
+                        [Class(class)] => (class, Condition::Base),
+                        [Class(class), NonTSPseudoClass(Hover)]
+                        | [NonTSPseudoClass(Hover), Class(class)] => (class, Condition::Hover),
+                        [Class(class), NonTSPseudoClass(Focus)]
+                        | [NonTSPseudoClass(Focus), Class(class)] => (class, Condition::Focus),
+                        [Class(class), NonTSPseudoClass(FocusVisible)]
+                        | [NonTSPseudoClass(FocusVisible), Class(class)] => {
+                            (class, Condition::FocusVisible)
+                        }
                         _ => {
                             let selector = selector.to_css_string(PrinterOptions::default())?;
                             return Err(JsError::new(&format!(
-                                "Unsupported selector `{selector}` in CSX stylesheet (line {line}). Use a single class with an optional :hover."
+                                "Unsupported selector `{selector}` in CSX stylesheet (line {line}). Use a single class with an optional :hover, :focus, or :focus-visible."
                             )));
                         }
                     };

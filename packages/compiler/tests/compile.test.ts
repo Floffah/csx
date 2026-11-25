@@ -144,6 +144,58 @@ test("keeps base and hover atoms distinct and orders their layers", () => {
     }
 });
 
+test("exports focus and focus-visible atoms independently inside and outside media queries", () => {
+    const compiler = new Compiler({
+        resolve: async () => "",
+        load: async () => "",
+    });
+
+    try {
+        const { exports } = compiler.compileModule({
+            id: "/focus.x.css",
+            source: `
+                .button { color: red; }
+                .button:hover { color: red; }
+                .button:focus, :focus-visible.button { color: red; }
+                @media screen {
+                    :focus.button, .button:focus-visible { color: red; }
+                }
+            `,
+        });
+        const button = exports.button;
+        expect(Object.keys(button)).toHaveLength(6);
+        expect(new Set(Object.values(button)).size).toBe(6);
+
+        const css = compiler.emit();
+        expect(
+            css.indexOf("@layer csx.longhand.unconditional.focus {"),
+        ).toBeGreaterThan(
+            css.indexOf("@layer csx.longhand.unconditional.hover {"),
+        );
+        for (const group of ["unconditional", "media"]) {
+            const focusLayer = css.indexOf(
+                `@layer csx.longhand.${group}.focus {`,
+            );
+            const visibleLayer = css.indexOf(
+                `@layer csx.longhand.${group}.focus-visible {`,
+            );
+            expect(focusLayer).toBeGreaterThan(-1);
+            expect(visibleLayer).toBeGreaterThan(focusLayer);
+        }
+        for (const state of [":focus", ":focus-visible"]) {
+            const key = `${state}:color`;
+            const atom = button[key];
+            const mediaAtom = button[`@media 6:screen:${key}`];
+            expect(css).toContain(`.${atom}${state} { color: red; }`);
+            expect(css).toContain(
+                `@media screen {\n    .${mediaAtom}${state} { color: red; }`,
+            );
+        }
+    } finally {
+        compiler.free();
+    }
+});
+
 test("emits selected modules in a stable cascade order", () => {
     const compiler = new Compiler({
         resolve: async () => "",
