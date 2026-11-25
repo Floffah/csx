@@ -135,11 +135,11 @@ Run your dev server and open the page that imports the `.x.css` file to generate
 
 ### Class selectors
 
-Use a single class per selector, with an optional `:hover`. Comma-separated selector lists such as `.button, .link:hover` are supported.
+Use a single class per selector, with at most one of `:hover`, `:focus`, or `:focus-visible`. Comma-separated selector lists such as `.button, .link:focus-visible` are supported. Within each property tier and media group, layers run from base to `:hover`, then `:focus`, then `:focus-visible`.
 
 ### Media queries
 
-Use top-level `@media` blocks to add responsive styles. Inside a block, you can use the same class selectors and optional `:hover` as at the top level.
+Use top-level `@media` blocks to add responsive styles. Inside a block, you can use the same class selectors and pseudo-classes as at the top level.
 
 ```css
 @media (min-width: 48rem) {

@@ -219,7 +219,12 @@ impl JsCompiler {
             (Layer::Longhand, "longhand"),
         ] {
             for (in_media, group) in [(false, "unconditional"), (true, "media")] {
-                for (condition, state) in [(Condition::Base, "base"), (Condition::Hover, "hover")] {
+                for (condition, state) in [
+                    (Condition::Base, "base"),
+                    (Condition::Hover, "hover"),
+                    (Condition::Focus, "focus"),
+                    (Condition::FocusVisible, "focus-visible"),
+                ] {
                     layers.push((
                         layer,
                         in_media,
