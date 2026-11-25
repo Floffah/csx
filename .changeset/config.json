@@ -1,7 +1,7 @@
 {
     "$schema": "https://unpkg.com/@changesets/config@4.0.1/schema.json",
     "access": "public",
-    "changelog": "./changelog.mjs",
+    "changelog": ["./changelog.mjs", { "repo": "Floffah/csx" }],
     "fixed": [
         [
             "@csx-style/compiler",
