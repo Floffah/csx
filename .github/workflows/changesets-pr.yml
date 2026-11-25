@@ -1,0 +1,36 @@
+name: Changesets PR Status
+
+on:
+    pull_request_target:
+
+permissions: {}
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+    cancel-in-progress: true
+
+jobs:
+    pr-status:
+        if: github.event.pull_request.head.repo.full_name != github.repository || !startsWith(github.head_ref, 'changeset-release/')
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        outputs:
+            comment-body: ${{ steps.pr-status.outputs.comment-body }}
+        steps:
+            # Checkout uses the trusted base ref. Changesets reads the PR in a temporary worktree.
+            - uses: actions/checkout@v7
+              with:
+                  persist-credentials: false
+            - uses: changesets/action/pr-status@v2
+              id: pr-status
+
+    pr-comment:
+        needs: pr-status
+        runs-on: ubuntu-latest
+        permissions:
+            pull-requests: write
+        steps:
+            - uses: changesets/action/pr-comment@v2
+              with:
+                  body: ${{ needs.pr-status.outputs.comment-body }}
