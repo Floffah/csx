@@ -116,6 +116,20 @@ export function Button({ primary }) {
 
 When `primary` is true, the later style overrides the background color and the button keeps its padding. For plain JavaScript, assign `props(styles.button).className` to the element's `className`.
 
+### Media queries
+
+Use top-level `@media` blocks to add responsive styles. Inside a block, you can use the same class selectors and optional `:hover` as at the top level.
+
+```css
+@media (min-width: 48rem) {
+    .button {
+        padding: 0.75rem 1.5rem;
+    }
+}
+```
+
+Keep using `props(styles.button)`. Styles composed with `props()` override each other per property, query, and selector state. In the generated CSS, media rules take precedence over unconditional rules within each reset, shorthand, or longhand tier. Overlapping queries follow stylesheet source order within the same cascade layer. When rules in that layer come from different files, CSX orders them by module ID.
+
 ## TypeScript
 
 Add these compiler options to the TypeScript config that covers your app code. If you already use `rootDirs`, add `.csx/types` alongside your existing roots. The paths below assume the config is in the app root.

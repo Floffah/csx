@@ -181,6 +181,99 @@ test("emits selected modules in a stable cascade order", () => {
     }
 });
 
+test("exports base, media, and media hover declarations independently", () => {
+    const compiler = new Compiler({
+        resolve: async () => "",
+        load: async () => "",
+    });
+
+    try {
+        const { exports, exportLocations } = compiler.compileModule({
+            id: "/button.x.css",
+            source: [
+                "@media screen, print {",
+                "    .button, .primary { margin: 1rem; }",
+                "    .button:hover { margin: 1rem; }",
+                "    .print-only { color: red; }",
+                "}",
+                ".button { margin: 0; margin-left: 2rem; }",
+            ].join("\n"),
+        });
+        const [mediaKey] = Object.keys(exports.primary);
+        const [hoverKey] = Object.keys(exports.button).filter(
+            (key) =>
+                key !== "margin" && key !== "margin-left" && key !== mediaKey,
+        );
+        const media = exports.button[mediaKey];
+        const hover = exports.button[hoverKey];
+        expect(exports.primary[mediaKey]).toBe(media);
+        expect(new Set([exports.button.margin, media, hover]).size).toBe(3);
+        expect(exportLocations.button).toEqual({ line: 5, column: 0 });
+        expect(exportLocations["print-only"]).toEqual({ line: 3, column: 4 });
+
+        const css = compiler.emit();
+        expect(css).toContain(
+            `@media screen, print {\n    .${media} { margin: 1rem; }`,
+        );
+        expect(css).toContain(`.${hover}:hover { margin: 1rem; }`);
+        expect(css.indexOf(`.${exports.button.margin} {`)).toBeLessThan(
+            css.indexOf(`.${media} {`),
+        );
+        expect(css.indexOf(`.${hover}:hover {`)).toBeLessThan(
+            css.indexOf(`.${exports.button["margin-left"]} {`),
+        );
+    } finally {
+        compiler.free();
+    }
+});
+
+test("keeps overlapping media rules in source order across repeated atoms", () => {
+    const compiler = new Compiler({
+        resolve: async () => "",
+        load: async () => "",
+    });
+
+    try {
+        const id = "/button.x.css";
+        const { exports } = compiler.compileModule({
+            id,
+            source: `
+                @media (min-width: 48rem) { .early, .button { color: red; } }
+                @media (min-width: 64rem) { .wide { color: blue; } }
+                @media (min-width: 48rem) {
+                    .late { color: red; }
+                    .button { color: green; }
+                }
+            `,
+        });
+        const [queryKey] = Object.keys(exports.early);
+        const early = exports.early[queryKey];
+        const [wide] = Object.values(exports.wide);
+        const late = exports.late[queryKey];
+        const button = exports.button[queryKey];
+        expect(Object.keys(exports.button)).toEqual([queryKey]);
+        expect(late).not.toBe(early);
+        expect(button).not.toBe(early);
+
+        const otherId = "/other.x.css";
+        compiler.compileModule({
+            id: otherId,
+            source: "@media (min-width: 48rem) { .other { color: red; } }",
+        });
+        expect(compiler.emit([id, otherId])).toBe(compiler.emit([otherId, id]));
+        const css = compiler.emit([id]);
+        expect(css.indexOf(`.${early} {`)).toBeLessThan(
+            css.indexOf(`.${wide} {`),
+        );
+        expect(css.indexOf(`.${wide} {`)).toBeLessThan(
+            css.indexOf(`.${late} {`),
+        );
+        expect(css).toContain(`.${button} { color: green; }`);
+    } finally {
+        compiler.free();
+    }
+});
+
 test.each([
     ".button { color: red !important; }",
     ".button:hover { color: red !IMPORTANT; }",
@@ -216,8 +309,12 @@ test.each([
         "Nested rules are not supported",
     ],
     [
-        "@media (min-width: 500px) { .button { color: red; } }",
+        "@media (min-width: 500px) { @media (hover: hover) { .button { color: red; } } }",
         "Unsupported rule `@media`",
+    ],
+    [
+        "@media print { button { color: red; } }",
+        "Unsupported selector `button`",
     ],
     ['@import "theme.css";', "Unsupported rule `@import`"],
     ["@unknown;", "Unsupported rule `@unknown`"],

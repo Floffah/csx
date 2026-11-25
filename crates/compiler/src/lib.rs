@@ -37,7 +37,7 @@ pub struct JsCompileModuleOptions {
 #[tsify(hashmap_as_object, rename = "CompileModuleResult")]
 pub struct JsCompileModuleResult {
     /// User class name -> property key -> generated atomic class name.
-    /// Conditional keys include the selector suffix, for example `:hover:color`.
+    /// Conditional keys include the media query and selector suffix when present.
     pub exports: HashMap<String, HashMap<String, String>>,
     /// Export name -> preferred rule start (zero-based line and UTF-16 column).
     #[serde(rename = "exportLocations")]
@@ -103,6 +103,7 @@ impl JsCompiler {
         for ClassBlock {
             name,
             condition,
+            in_media,
             location,
             declarations,
         } in &blocks
@@ -111,7 +112,7 @@ impl JsCompiler {
                 line: location.line,
                 column: location.column - 1,
             };
-            if *condition == Condition::Base && base_locations.insert(name) {
+            if !in_media && *condition == Condition::Base && base_locations.insert(name) {
                 result.export_locations.insert(name.clone(), position);
             } else {
                 result
@@ -124,13 +125,18 @@ impl JsCompiler {
                 let css = &declaration.css;
                 let mut hasher = DefaultHasher::new();
                 (&options.id, css).hash(&mut hasher);
-                let key = if declaration.condition == Condition::Base {
+                let mut key = if declaration.condition == Condition::Base {
                     declaration.property.clone()
                 } else {
                     let suffix = declaration.condition.suffix();
                     suffix.hash(&mut hasher);
                     format!("{suffix}:{}", declaration.property)
                 };
+                if let Some(media) = &declaration.media {
+                    // Sharing atoms across source rules can change which overlapping query wins.
+                    (&media.query, media.position).hash(&mut hasher);
+                    key = format!("@media {}:{}:{key}", media.query.len(), media.query);
+                }
                 let atomic_class = format!("c{:08x}x", hasher.finish() & 0xffff_ffff);
 
                 let previous = atomic_declarations
@@ -167,17 +173,18 @@ impl JsCompiler {
                 .iter()
                 .map(|id| {
                     self.modules
-                        .get(id)
+                        .get_key_value(id)
                         .ok_or_else(|| JsError::new(&format!("CSX module was not compiled: {id}")))
                 })
                 .collect::<Result<_, _>>()?,
-            None => self.modules.values().collect(),
+            None => self.modules.iter().collect(),
         };
         let mut atoms = HashMap::new();
-        for module in modules {
+        for (id, module) in modules {
             for (name, declaration) in module {
-                if let Some(previous) = atoms.insert(name, declaration)
-                    && previous != declaration
+                if let Some((previous_id, previous)) = atoms.insert(name, (id, declaration))
+                    && (previous != declaration
+                        || (declaration.media.is_some() && previous_id != id))
                 {
                     return Err(JsError::new(&format!(
                         "Atomic class hash collision for {name}"
@@ -190,54 +197,47 @@ impl JsCompiler {
         }
 
         let mut atoms: Vec<_> = atoms.into_iter().collect();
-        atoms.sort_unstable_by_key(|(name, declaration)| {
+        atoms.sort_unstable_by_key(|(name, (id, declaration))| {
             (
                 declaration.layer,
+                declaration.media.is_some(),
                 declaration.condition,
+                declaration
+                    .media
+                    .as_ref()
+                    .map(|media| (*id, media.position)),
                 Reverse(declaration.shorthand_width),
                 declaration.property.as_str(),
                 *name,
             )
         });
 
-        let layers = [
-            (
-                Layer::Reset,
-                Condition::Base,
-                "csx.reset.unconditional.base",
-            ),
-            (
-                Layer::Reset,
-                Condition::Hover,
-                "csx.reset.unconditional.hover",
-            ),
-            (
-                Layer::Shorthand,
-                Condition::Base,
-                "csx.shorthand.unconditional.base",
-            ),
-            (
-                Layer::Shorthand,
-                Condition::Hover,
-                "csx.shorthand.unconditional.hover",
-            ),
-            (
-                Layer::Longhand,
-                Condition::Base,
-                "csx.longhand.unconditional.base",
-            ),
-            (
-                Layer::Longhand,
-                Condition::Hover,
-                "csx.longhand.unconditional.hover",
-            ),
-        ];
-        let mut css = format!("@layer {};\n", layers.map(|(_, _, name)| name).join(", "));
-        for (layer, condition, name) in layers {
+        let mut layers = Vec::new();
+        for (layer, tier) in [
+            (Layer::Reset, "reset"),
+            (Layer::Shorthand, "shorthand"),
+            (Layer::Longhand, "longhand"),
+        ] {
+            for (in_media, group) in [(false, "unconditional"), (true, "media")] {
+                for (condition, state) in [(Condition::Base, "base"), (Condition::Hover, "hover")] {
+                    layers.push((
+                        layer,
+                        in_media,
+                        condition,
+                        format!("csx.{tier}.{group}.{state}"),
+                    ));
+                }
+            }
+        }
+        let names: Vec<_> = layers.iter().map(|(_, _, _, name)| name.as_str()).collect();
+        let mut css = format!("@layer {};\n", names.join(", "));
+        for (layer, in_media, condition, name) in layers {
             let mut rules = atoms
                 .iter()
-                .filter(|(_, declaration)| {
-                    declaration.layer == layer && declaration.condition == condition
+                .filter(|(_, (_, declaration))| {
+                    declaration.layer == layer
+                        && declaration.media.is_some() == in_media
+                        && declaration.condition == condition
                 })
                 .peekable();
             if rules.peek().is_none() {
@@ -245,8 +245,26 @@ impl JsCompiler {
             }
             css.push_str(&format!("\n@layer {name} {{\n"));
             let suffix = condition.suffix();
-            for (class, declaration) in rules {
-                css.push_str(&format!("  .{class}{suffix} {{ {}; }}\n", declaration.css));
+            let mut open_query = None;
+            for (class, (_, declaration)) in rules {
+                let query = declaration.media.as_ref().map(|media| media.query.as_str());
+                if open_query != query {
+                    if open_query.is_some() {
+                        css.push_str("  }\n");
+                    }
+                    if let Some(query) = query {
+                        css.push_str(&format!("  @media {query} {{\n"));
+                    }
+                    open_query = query;
+                }
+                let indent = if in_media { "    " } else { "  " };
+                css.push_str(&format!(
+                    "{indent}.{class}{suffix} {{ {}; }}\n",
+                    declaration.css
+                ));
+            }
+            if open_query.is_some() {
+                css.push_str("  }\n");
             }
             css.push_str("}\n");
         }

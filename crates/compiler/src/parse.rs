@@ -1,7 +1,7 @@
 use lightningcss::declaration::DeclarationBlock;
 use lightningcss::printer::PrinterOptions;
 use lightningcss::properties::{Property, PropertyId};
-use lightningcss::rules::{CssRule, Location};
+use lightningcss::rules::{CssRule, CssRuleList, Location};
 use lightningcss::selector::PseudoClass;
 use lightningcss::stylesheet::{ParserOptions, StyleSheet};
 use lightningcss::traits::ToCss;
@@ -12,8 +12,15 @@ use wasm_bindgen::JsError;
 pub(super) struct ClassBlock {
     pub(super) name: String,
     pub(super) condition: Condition,
+    pub(super) in_media: bool,
     pub(super) location: Location,
     pub(super) declarations: Vec<Declaration>,
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub(super) struct Media {
+    pub(super) query: String,
+    pub(super) position: (u32, u32),
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -44,11 +51,17 @@ pub(super) struct Declaration {
     pub(super) css: String,
     pub(super) layer: Layer,
     pub(super) condition: Condition,
+    pub(super) media: Option<Media>,
     pub(super) shorthand_width: usize,
 }
 
 impl Declaration {
-    fn new(property: &Property, name: String, condition: Condition) -> Result<Self, JsError> {
+    fn new(
+        property: &Property,
+        name: String,
+        condition: Condition,
+        media: Option<&Media>,
+    ) -> Result<Self, JsError> {
         let id = property.property_id();
         let (layer, shorthand_width) = match id {
             PropertyId::All => (Layer::Reset, 0),
@@ -62,6 +75,7 @@ impl Declaration {
             css: property.to_css_string(false, PrinterOptions::default())?,
             layer,
             condition,
+            media: media.cloned(),
             shorthand_width,
         })
     }
@@ -90,9 +104,21 @@ pub(super) fn parse(source: &str) -> Result<Vec<ClassBlock>, JsError> {
     let mut sheet = StyleSheet::parse(source, ParserOptions::default())?;
     sheet.visit(&mut RejectImportant)?;
     let mut blocks = Vec::new();
+    parse_rules(sheet.rules, None, &mut blocks)?;
+    Ok(blocks)
+}
 
-    for rule in sheet.rules.0 {
+fn parse_rules(
+    rules: CssRuleList<'_>,
+    query: Option<&str>,
+    blocks: &mut Vec<ClassBlock>,
+) -> Result<(), JsError> {
+    for rule in rules.0 {
         match rule {
+            CssRule::Media(media) if query.is_none() => {
+                let query = media.query.to_css_string(PrinterOptions::default())?;
+                parse_rules(media.rules, Some(&query), blocks)?;
+            }
             CssRule::Style(style) => {
                 let line = style.loc.line + 1;
                 if !style.rules.0.is_empty() {
@@ -100,6 +126,10 @@ pub(super) fn parse(source: &str) -> Result<Vec<ClassBlock>, JsError> {
                         "Nested rules are not supported in CSX stylesheets (line {line})"
                     )));
                 }
+                let media = query.map(|query| Media {
+                    query: query.to_owned(),
+                    position: (style.loc.line, style.loc.column),
+                });
                 for selector in &style.selectors.0 {
                     let (class, condition) = match selector.iter_raw_match_order().as_slice() {
                         [Component::Class(class)] => (class, Condition::Base),
@@ -124,11 +154,17 @@ pub(super) fn parse(source: &str) -> Result<Vec<ClassBlock>, JsError> {
                         let name = property
                             .property_id()
                             .to_css_string(PrinterOptions::default())?;
-                        declarations.push(Declaration::new(property, name, condition)?);
+                        declarations.push(Declaration::new(
+                            property,
+                            name,
+                            condition,
+                            media.as_ref(),
+                        )?);
                     }
                     blocks.push(ClassBlock {
                         name: class.0.to_string(),
                         condition,
+                        in_media: media.is_some(),
                         location: style.loc,
                         declarations,
                     });
@@ -148,5 +184,5 @@ pub(super) fn parse(source: &str) -> Result<Vec<ClassBlock>, JsError> {
         }
     }
 
-    Ok(blocks)
+    Ok(())
 }
