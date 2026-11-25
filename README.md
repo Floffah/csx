@@ -151,6 +151,12 @@ Use top-level `@media` blocks to add responsive styles. Inside a block, you can 
 
 Keep using `props(styles.button)`. Styles composed with `props()` override each other per property, query, and selector state. In the generated CSS, media rules take precedence over unconditional rules within each reset, shorthand, or longhand tier. Overlapping queries follow stylesheet source order within the same cascade layer. When rules in that layer come from different files, CSX orders them by module ID.
 
+### Theming
+
+CSX is intended to be compatible and interoperable with vanilla CSS meaning that native features are heavily relied on for styling properly. Originally, CSX supported a custom StyleX-vars-style `@tokens` block, but that has been removed in favour of vanilla CSS variables (e.g. `:root { --foo: bar}` / `.button { color: var(--foo) }`) with potential future plans for bringing better precedence and automatic overriding behaviour via compiled style tags and group var classes.
+
+This means that today, you should be defining your theme/style system in the `:root` block of your main CSS file, preferably before the `@csx` directive. Then just reference them as you would in normal css. You may also define/override variables within a CSX class, as variable definitions are treated the same way normal properties are in the compiler.
+
 ## Examples
 
 - [Next.js App Router](https://github.com/Floffah/csx/tree/main/examples/next)
