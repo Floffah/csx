@@ -1,0 +1,74 @@
+name: Pull Request Template
+
+on:
+    pull_request_target:
+        types: [opened, edited, reopened, ready_for_review]
+
+permissions:
+    pull-requests: write
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+
+jobs:
+    check-template:
+        runs-on: ubuntu-latest
+        steps:
+            # Fork PR comments need base-repository permissions. Only PR metadata is read.
+            - uses: actions/github-script@373c709c69115d41ff229c7e5df9f8788daa9553 # v9
+              with:
+                  script: |
+                      const repo = context.repo;
+                      const issue_number = context.issue.number;
+                      const { data: pr } = await github.rest.pulls.get({
+                          ...repo,
+                          pull_number: issue_number,
+                      });
+
+                      if (pr.state !== "open" || pr.draft || pr.user.type === "Bot") return;
+
+                      const marker = "<!-- csx-pr-template -->";
+                      const sections = (pr.body ?? "")
+                          .replace(/<!--[^]*?(?:-->|$)/g, "")
+                          .replace(/^ {0,3}(`{3,}|~{3,})[^\n]*\n[^]*?^ {0,3}\1[`~]*[^\S\n]*$/gm, "Code example")
+                          .split(/^ {0,3}##[ \t]+(.+?)[ \t]*\r?$/m);
+
+                      const content = new Map();
+                      for (let index = 1; index < sections.length; index += 2) {
+                          const heading = sections[index].trim().toLowerCase();
+                          content.set(heading, sections[index + 1].trim());
+                      }
+
+                      const missing = ["What", "Why", "How"].filter(
+                          (heading) => !content.get(heading.toLowerCase()),
+                      );
+                      const checklist = content.get("contributor checklist") ?? "";
+                      const unchecked = checklist.match(/^\s*[-*+] +\[ \](?=\s|$)/gm)?.length ?? 0;
+                      const reminders = missing.map((heading) => `- Fill in **${heading}**.`);
+                      if (unchecked) {
+                          reminders.push(`- Review the **Contributor checklist**. Unchecked items: ${unchecked}.`);
+                      }
+
+                      const conventionalTitle = /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9][a-z0-9._/-]*\))?!?: [a-z](?:[^\r\n]*[^.\s])?$/;
+                      const invalidTitle = !conventionalTitle.test(pr.title);
+                      const titleReminder = "Use a Conventional Commit title, such as `feat(compiler): support media queries` or `fix: preserve stylesheet source order`.";
+                      if (invalidTitle) reminders.push(`- ${titleReminder}`);
+
+                      const { issues } = github.rest;
+                      const comments = await github.paginate(issues.listComments, { ...repo, issue_number });
+                      const existing = comments.find(
+                          (comment) => comment.user?.login === "github-actions[bot]" && comment.body?.startsWith(marker),
+                      );
+
+                      if (reminders.length === 0) {
+                          if (existing) await issues.deleteComment({ ...repo, comment_id: existing.id });
+                          return;
+                      }
+
+                      const body = [marker, "Please complete the PR template before review.", "", ...reminders].join("\n");
+                      if (!existing) {
+                          await issues.createComment({ ...repo, issue_number, body });
+                      } else if (existing.body !== body) {
+                          await issues.updateComment({ ...repo, comment_id: existing.id, body });
+                      }
+                      if (invalidTitle) core.setFailed(titleReminder);
