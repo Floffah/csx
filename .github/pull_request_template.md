@@ -89,4 +89,4 @@ or areas that would benefit from particular reviewer attention.
 - [ ] I have followed the project's contribution guidelines.
 - [ ] I have attached a changeset if applicable
 
-<!-- Don't move this checklist section please -->
+<!-- Don't rephrase these, but you can remove some if they are not applicable. Don't move this checklist section please -->
