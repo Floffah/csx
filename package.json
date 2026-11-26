@@ -30,7 +30,7 @@
         "prettier": "3.9.10",
         "rolldown-plugin-wasm": "^0.3.2",
         "tsdown": "^0.23.7",
-        "turbo": "^2.11.10",
+        "turbo": "^2.11.13",
         "typescript": "^7.0.2",
         "vite": "^8.3.7"
     },
