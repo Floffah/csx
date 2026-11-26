@@ -10,7 +10,7 @@
     "devDependencies": {
         "@csx-style/postcss": "workspace:*",
         "@csx-style/vite": "workspace:*",
-        "postcss": "^8.5.32",
-        "vite": "^8.3.7"
+        "postcss": "^8.5.33",
+        "vite": "^8.4.0"
     }
 }
