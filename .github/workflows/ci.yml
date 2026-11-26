@@ -28,9 +28,12 @@ jobs:
             - uses: dtolnay/rust-toolchain@stable
               with:
                   targets: wasm32-unknown-unknown
+                  components: rustfmt
             - uses: taiki-e/install-action@v2
               with:
                   tool: wasm-pack@0.15.1
             - run: bun install --frozen-lockfile
+            - run: bun run format:check
+            - run: cargo fmt --all --check
             - run: bun run build
             - run: bun run test

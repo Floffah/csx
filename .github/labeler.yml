@@ -1,0 +1,33 @@
+compiler:
+    - changed-files:
+          - any-glob-to-any-file: ["crates/compiler/**", "packages/compiler/**"]
+
+core:
+    - changed-files:
+          - any-glob-to-any-file: ["packages/csx/**"]
+
+vite:
+    - changed-files:
+          - any-glob-to-any-file: ["packages/vite/**", "examples/vite-*/**"]
+
+next:
+    - changed-files:
+          - any-glob-to-any-file: ["packages/next/**", "examples/next/**"]
+
+postcss:
+    - changed-files:
+          - any-glob-to-any-file: ["packages/postcss/**"]
+
+docs:
+    - changed-files:
+          - any-glob-to-any-file:
+                ["*.md", "packages/*/README.md", "examples/*/README.md"]
+
+ci:
+    - changed-files:
+          - any-glob-to-any-file:
+                [
+                    ".github/workflows/**",
+                    ".github/dependabot.yml",
+                    ".github/labeler.yml",
+                ]

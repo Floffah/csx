@@ -12,6 +12,7 @@ authorised reviewer. The no-autopilot system helps enforce this policy.
 -->
 
 <!-- Link any relevant issues. Remove if not applicable. -->
+
 Resolves #
 
 ## What
@@ -30,9 +31,10 @@ Provide relevant context, motivation, or limitations of the existing behaviour.
 
 ## How
 
-<!-- Required for implementation changes
+<!-- Required
 Explain the approach taken and any significant implementation decisions.
 Focus on things that are not immediately obvious from the diff.
+If implementation details do not apply, briefly explain why.
 -->
 
 ## Impact
@@ -82,6 +84,9 @@ or areas that would benefit from particular reviewer attention.
 - [ ] I have manually reviewed the entirety of my changes.
 - [ ] I understand the implementation and can explain its behaviour.
 - [ ] I have performed the relevant checks and disclosed any failures or limitations.
+- [ ] I have included appropriate context
 - [ ] I have identified any applicable breaking changes.
 - [ ] I have followed the project's contribution guidelines.
 - [ ] I have attached a changeset if applicable
+
+<!-- Don't move this checklist section please -->
