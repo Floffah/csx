@@ -2,7 +2,9 @@ use lightningcss::declaration::DeclarationBlock;
 use lightningcss::printer::PrinterOptions;
 use lightningcss::properties::{Property, PropertyId};
 use lightningcss::rules::{CssRule, CssRuleList, Location};
-use lightningcss::selector::PseudoClass::{self, Focus, FocusVisible, Hover};
+use lightningcss::selector::PseudoClass::{
+    self, Active, Disabled, Focus, FocusVisible, FocusWithin, Hover, Invalid, Required,
+};
 use lightningcss::stylesheet::{ParserOptions, StyleSheet};
 use lightningcss::traits::ToCss;
 use lightningcss::visitor::{Visit, VisitTypes, Visitor};
@@ -40,6 +42,11 @@ fn selector_states<'i>() -> &'i [SelectorState<'i>] {
             (Some(Hover), ":hover", "hover"),
             (Some(Focus), ":focus", "focus"),
             (Some(FocusVisible), ":focus-visible", "focus-visible"),
+            (Some(Active), ":active", "active"),
+            (Some(Disabled), ":disabled", "disabled"),
+            (Some(FocusWithin), ":focus-within", "focus-within"),
+            (Some(Required), ":required", "required"),
+            (Some(Invalid), ":invalid", "invalid"),
         ]
     }
 }

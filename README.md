@@ -135,7 +135,7 @@ Run your dev server and open the page that imports the `.x.css` file to generate
 
 ### Class selectors
 
-Use a single class per selector, with at most one of `:hover`, `:focus`, or `:focus-visible`. Comma-separated selector lists such as `.button, .link:focus-visible` are supported. Within each property tier and media group, layers run from base to `:hover`, then `:focus`, then `:focus-visible`.
+Use a single class per selector, optionally with one of the pseudo-classes below. Comma-separated selector lists such as `.button, .link:focus-visible` are supported. Within each property tier and media group, layers run in order from base through `:hover`, `:focus`, `:focus-visible`, `:active`, `:disabled`, `:focus-within`, `:required`, and `:invalid`. Later layers take precedence.
 
 ### Media queries
 
