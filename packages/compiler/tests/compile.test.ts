@@ -352,6 +352,7 @@ test.each([
         '.button, [data-name="link"] { color: red; }',
         "Unsupported selector `[data-name=",
     ],
+    [".button:active { color: red; }", "Unsupported selector `.button:active`"],
     [
         ".button:hover:focus { color: red; }",
         "Unsupported selector `.button:hover:focus`",

@@ -2,7 +2,7 @@ use lightningcss::declaration::DeclarationBlock;
 use lightningcss::printer::PrinterOptions;
 use lightningcss::properties::{Property, PropertyId};
 use lightningcss::rules::{CssRule, CssRuleList, Location};
-use lightningcss::selector::PseudoClass::{Focus, FocusVisible, Hover};
+use lightningcss::selector::PseudoClass::{self, Focus, FocusVisible, Hover};
 use lightningcss::stylesheet::{ParserOptions, StyleSheet};
 use lightningcss::traits::ToCss;
 use lightningcss::visitor::{Visit, VisitTypes, Visitor};
@@ -30,22 +30,33 @@ pub(super) enum Layer {
     Longhand,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub(super) enum Condition {
-    Base,
-    Hover,
-    Focus,
-    FocusVisible,
+// Later entries take precedence within each property tier and media group.
+type SelectorState<'i> = (Option<PseudoClass<'i>>, &'static str, &'static str);
+
+fn selector_states<'i>() -> &'i [SelectorState<'i>] {
+    const {
+        &[
+            (None, "", "base"),
+            (Some(Hover), ":hover", "hover"),
+            (Some(Focus), ":focus", "focus"),
+            (Some(FocusVisible), ":focus-visible", "focus-visible"),
+        ]
+    }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub(super) struct Condition(usize);
+
 impl Condition {
+    pub(super) fn ordered() -> impl Iterator<Item = (Self, &'static str)> {
+        selector_states()
+            .iter()
+            .enumerate()
+            .map(|(index, (_, _, layer))| (Self(index), *layer))
+    }
+
     pub(super) fn suffix(self) -> &'static str {
-        match self {
-            Self::Base => "",
-            Self::Hover => ":hover",
-            Self::Focus => ":focus",
-            Self::FocusVisible => ":focus-visible",
-        }
+        selector_states()[self.0].1
     }
 }
 
@@ -135,22 +146,27 @@ fn parse_rules(
                     position: (style.loc.line, style.loc.column),
                 });
                 for selector in &style.selectors.0 {
-                    let (class, condition) = match selector.iter_raw_match_order().as_slice() {
-                        [Class(class)] => (class, Condition::Base),
-                        [Class(class), NonTSPseudoClass(Hover)]
-                        | [NonTSPseudoClass(Hover), Class(class)] => (class, Condition::Hover),
-                        [Class(class), NonTSPseudoClass(Focus)]
-                        | [NonTSPseudoClass(Focus), Class(class)] => (class, Condition::Focus),
-                        [Class(class), NonTSPseudoClass(FocusVisible)]
-                        | [NonTSPseudoClass(FocusVisible), Class(class)] => {
-                            (class, Condition::FocusVisible)
-                        }
-                        _ => {
-                            let selector = selector.to_css_string(PrinterOptions::default())?;
-                            return Err(JsError::new(&format!(
-                                "Unsupported selector `{selector}` in CSX stylesheet (line {line}). Use a single class with an optional :hover, :focus, or :focus-visible."
-                            )));
-                        }
+                    let state = match selector.iter_raw_match_order().as_slice() {
+                        [Class(class)] => Some((class, None)),
+                        [Class(class), NonTSPseudoClass(pseudo)]
+                        | [NonTSPseudoClass(pseudo), Class(class)] => Some((class, Some(pseudo))),
+                        _ => None,
+                    };
+                    let Some((class, condition)) = state.and_then(|(class, pseudo)| {
+                        selector_states()
+                            .iter()
+                            .position(|(known, _, _)| known.as_ref() == pseudo)
+                            .map(|index| (class, Condition(index)))
+                    }) else {
+                        let selector = selector.to_css_string(PrinterOptions::default())?;
+                        let supported = selector_states()
+                            .iter()
+                            .filter_map(|(pseudo, suffix, _)| pseudo.as_ref().map(|_| *suffix))
+                            .collect::<Vec<_>>()
+                            .join(", ");
+                        return Err(JsError::new(&format!(
+                            "Unsupported selector `{selector}` in CSX stylesheet (line {line}). Use a single class with an optional pseudo-class ({supported})."
+                        )));
                     };
 
                     let mut declarations = Vec::new();
