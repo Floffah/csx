@@ -144,51 +144,55 @@ test("keeps base and hover atoms distinct and orders their layers", () => {
     }
 });
 
-test("exports focus and focus-visible atoms independently inside and outside media queries", () => {
+test("exports pseudo-class atoms independently in cascade order inside and outside media queries", () => {
     const compiler = new Compiler({
         resolve: async () => "",
         load: async () => "",
     });
 
     try {
+        const states = [
+            "hover",
+            "focus",
+            "focus-visible",
+            "active",
+            "disabled",
+            "focus-within",
+            "required",
+            "invalid",
+        ];
         const { exports } = compiler.compileModule({
-            id: "/focus.x.css",
+            id: "/states.x.css",
             source: `
                 .button { color: red; }
-                .button:hover { color: red; }
-                .button:focus, :focus-visible.button { color: red; }
+                ${states.map((state) => `.button:${state}`).join(", ")} { color: red; }
                 @media screen {
-                    :focus.button, .button:focus-visible { color: red; }
+                    ${states.map((state) => `:${state}.button`).join(", ")} { color: red; }
                 }
             `,
         });
         const button = exports.button;
-        expect(Object.keys(button)).toHaveLength(6);
-        expect(new Set(Object.values(button)).size).toBe(6);
+        expect(Object.keys(button)).toHaveLength(1 + states.length * 2);
+        expect(new Set(Object.values(button)).size).toBe(1 + states.length * 2);
 
         const css = compiler.emit();
-        expect(
-            css.indexOf("@layer csx.longhand.unconditional.focus {"),
-        ).toBeGreaterThan(
-            css.indexOf("@layer csx.longhand.unconditional.hover {"),
-        );
         for (const group of ["unconditional", "media"]) {
-            const focusLayer = css.indexOf(
-                `@layer csx.longhand.${group}.focus {`,
-            );
-            const visibleLayer = css.indexOf(
-                `@layer csx.longhand.${group}.focus-visible {`,
-            );
-            expect(focusLayer).toBeGreaterThan(-1);
-            expect(visibleLayer).toBeGreaterThan(focusLayer);
+            let previousLayer = -1;
+            for (const state of states) {
+                const layer = css.indexOf(
+                    `@layer csx.longhand.${group}.${state} {`,
+                );
+                expect(layer).toBeGreaterThan(previousLayer);
+                previousLayer = layer;
+            }
         }
-        for (const state of [":focus", ":focus-visible"]) {
-            const key = `${state}:color`;
+        for (const state of states) {
+            const key = `:${state}:color`;
             const atom = button[key];
             const mediaAtom = button[`@media 6:screen:${key}`];
-            expect(css).toContain(`.${atom}${state} { color: red; }`);
+            expect(css).toContain(`.${atom}:${state} { color: red; }`);
             expect(css).toContain(
-                `@media screen {\n    .${mediaAtom}${state} { color: red; }`,
+                `@media screen {\n    .${mediaAtom}:${state} { color: red; }`,
             );
         }
     } finally {
@@ -352,7 +356,10 @@ test.each([
         '.button, [data-name="link"] { color: red; }',
         "Unsupported selector `[data-name=",
     ],
-    [".button:active { color: red; }", "Unsupported selector `.button:active`"],
+    [
+        ".button:checked { color: red; }",
+        "Unsupported selector `.button:checked`",
+    ],
     [
         ".button:hover:focus { color: red; }",
         "Unsupported selector `.button:hover:focus`",
