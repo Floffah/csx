@@ -23,7 +23,7 @@
     },
     "dependencies": {
         "@csx-style/compiler": "0.0.1",
-        "postcss": "^8.5.32"
+        "postcss": "^8.5.33"
     },
     "peerDependencies": {
         "vite": "^8.3.7"
