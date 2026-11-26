@@ -112,7 +112,7 @@ impl JsCompiler {
                 line: location.line,
                 column: location.column - 1,
             };
-            if !in_media && *condition == Condition::Base && base_locations.insert(name) {
+            if !in_media && condition.suffix().is_empty() && base_locations.insert(name) {
                 result.export_locations.insert(name.clone(), position);
             } else {
                 result
@@ -125,10 +125,10 @@ impl JsCompiler {
                 let css = &declaration.css;
                 let mut hasher = DefaultHasher::new();
                 (&options.id, css).hash(&mut hasher);
-                let mut key = if declaration.condition == Condition::Base {
+                let suffix = declaration.condition.suffix();
+                let mut key = if suffix.is_empty() {
                     declaration.property.clone()
                 } else {
-                    let suffix = declaration.condition.suffix();
                     suffix.hash(&mut hasher);
                     format!("{suffix}:{}", declaration.property)
                 };
@@ -219,12 +219,7 @@ impl JsCompiler {
             (Layer::Longhand, "longhand"),
         ] {
             for (in_media, group) in [(false, "unconditional"), (true, "media")] {
-                for (condition, state) in [
-                    (Condition::Base, "base"),
-                    (Condition::Hover, "hover"),
-                    (Condition::Focus, "focus"),
-                    (Condition::FocusVisible, "focus-visible"),
-                ] {
+                for (condition, state) in Condition::ordered() {
                     layers.push((
                         layer,
                         in_media,
