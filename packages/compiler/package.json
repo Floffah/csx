@@ -1,6 +1,6 @@
 {
     "name": "@csx-style/compiler",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "description": "Compiler for CSX build tool and PostCSS integrations.",
     "license": "MIT",
     "repository": {

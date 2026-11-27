@@ -1,5 +1,12 @@
 # @csx-style/next
 
+## 0.1.0
+
+### Patch Changes
+
+- Updated dependencies [5b727db, 31f6465, 54604db, 2e6663c, 67558a0]
+    - @csx-style/compiler@0.1.0
+
 ## 0.0.1
 
 ### Patch Changes
