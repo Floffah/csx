@@ -2,7 +2,7 @@
 
 mod parse;
 
-use parse::{ClassBlock, Condition, Declaration, Layer};
+use parse::{ClassBlock, Declaration, Layer};
 use serde::{Deserialize, Serialize};
 use std::cmp::Reverse;
 use std::collections::{HashMap, HashSet};
@@ -212,39 +212,20 @@ impl JsCompiler {
             )
         });
 
-        let mut layers = Vec::new();
+        let mut css = String::from("@layer csx.reset, csx.shorthand, csx.longhand;\n");
         for (layer, tier) in [
             (Layer::Reset, "reset"),
             (Layer::Shorthand, "shorthand"),
             (Layer::Longhand, "longhand"),
         ] {
-            for (in_media, group) in [(false, "unconditional"), (true, "media")] {
-                for (condition, state) in Condition::ordered() {
-                    layers.push((
-                        layer,
-                        in_media,
-                        condition,
-                        format!("csx.{tier}.{group}.{state}"),
-                    ));
-                }
-            }
-        }
-        let names: Vec<_> = layers.iter().map(|(_, _, _, name)| name.as_str()).collect();
-        let mut css = format!("@layer {};\n", names.join(", "));
-        for (layer, in_media, condition, name) in layers {
             let mut rules = atoms
                 .iter()
-                .filter(|(_, (_, declaration))| {
-                    declaration.layer == layer
-                        && declaration.media.is_some() == in_media
-                        && declaration.condition == condition
-                })
+                .filter(|(_, (_, declaration))| declaration.layer == layer)
                 .peekable();
             if rules.peek().is_none() {
                 continue;
             }
-            css.push_str(&format!("\n@layer {name} {{\n"));
-            let suffix = condition.suffix();
+            css.push_str(&format!("\n@layer csx.{tier} {{\n"));
             let mut open_query = None;
             for (class, (_, declaration)) in rules {
                 let query = declaration.media.as_ref().map(|media| media.query.as_str());
@@ -257,11 +238,14 @@ impl JsCompiler {
                     }
                     open_query = query;
                 }
-                let indent = if in_media { "    " } else { "  " };
-                css.push_str(&format!(
-                    "{indent}.{class}{suffix} {{ {}; }}\n",
-                    declaration.css
-                ));
+                let indent = if query.is_some() { "    " } else { "  " };
+                css.push_str(&format!("{indent}.{class}"));
+                let suffix = declaration.condition.suffix();
+                // Match base-rule specificity so the compiler's order decides precedence.
+                if !suffix.is_empty() {
+                    css.push_str(&format!(":where({suffix})"));
+                }
+                css.push_str(&format!(" {{ {}; }}\n", declaration.css));
             }
             if open_query.is_some() {
                 css.push_str("  }\n");

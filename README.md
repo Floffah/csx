@@ -135,7 +135,7 @@ Run your dev server and open the page that imports the `.x.css` file to generate
 
 ### Class selectors
 
-Use a single class per selector, optionally with one of the pseudo-classes below. Comma-separated selector lists such as `.button, .link:focus-visible` are supported. Within each property tier and media group, layers run in order from base through `:hover`, `:focus`, `:focus-visible`, `:active`, `:disabled`, `:focus-within`, `:required`, and `:invalid`. Later layers take precedence.
+Use a single class per selector, optionally with one of the pseudo-classes below. Comma-separated selector lists such as `.button, .link:focus-visible` are supported. Within each property tier and media group, rules are emitted in order from base through `:hover`, `:focus`, `:focus-visible`, `:active`, `:disabled`, `:focus-within`, `:required`, and `:invalid`. Later rules take precedence when multiple states match.
 
 ### Media queries
 
@@ -149,7 +149,7 @@ Use top-level `@media` blocks to add responsive styles. Inside a block, you can 
 }
 ```
 
-Keep using `props(styles.button)`. Styles composed with `props()` override each other per property, query, and selector state. In the generated CSS, media rules take precedence over unconditional rules within each reset, shorthand, or longhand tier. Overlapping queries follow stylesheet source order within the same cascade layer. When rules in that layer come from different files, CSX orders them by module ID.
+Keep using `props(styles.button)`. Styles composed with `props()` override each other per property, query, and selector state. The generated CSS orders `csx.reset` before `csx.shorthand` and `csx.longhand`, with later layers taking precedence. Within each layer, media rules follow unconditional rules. Overlapping queries at the same selector state follow source order within a file and module ID order across files. Emit styles together to preserve this order when they can apply to the same element. `revert-layer` rolls back the entire property tier.
 
 ### Theming
 

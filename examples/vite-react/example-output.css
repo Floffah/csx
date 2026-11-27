@@ -1,113 +1,152 @@
-@layer csx.reset.unconditional.base, csx.reset.unconditional.hover;
-@layer csx.shorthand.unconditional.base {
-    .cb06dc81dx {
-        border: 0;
+:root {
+    --accent: #4f46e5;
+    --accent-hover: #4338ca;
+}
+@layer csx.reset {
+    .cb8263f8cx {
+        all: unset;
     }
-
-    .c10dcb28dx {
+}
+@layer csx.shorthand {
+    .cc2c126f5x {
         border: 1px solid #e2e8f0;
     }
-
-    .cda04f808x {
+    .c76889772x {
         font: inherit;
     }
-
-    .c33cd89c3x {
+    .c87e148bdx {
         border-radius: 0.75rem;
     }
-
-    .c3a729a99x {
+    .c8c22bf1fx {
         border-radius: 1.5rem;
     }
-
-    .c7cc59f08x {
+    .c084a6892x {
         margin: 0;
     }
-
-    .c0275e44dx {
-        padding: 2rem;
+    .ca668840bx {
+        padding: 1.25rem;
     }
-
-    .c096b4523x {
+    .cdc625044x {
         padding: 0.75rem 1.25rem;
     }
-
-    .c90a0b416x {
+    .c0ae8293fx {
+        gap: 0.5rem;
+    }
+    .cdfcbadebx {
         gap: 1rem;
     }
-}
-@layer csx.shorthand.unconditional.hover;
-@layer csx.longhand.unconditional.base {
-    .c43838b30x {
-        background-color: #4f46e5;
+    .c554fdfb1x:where(:focus-visible) {
+        outline: 2px solid var(--accent);
     }
-
-    .cbe84c75ex {
+    @media (width>=36rem) {
+        .c50d19c8fx {
+            padding: 2rem;
+        }
+    }
+}
+@layer csx.longhand {
+    .c0b6f92a6x {
+        --button-bg: #475569;
+    }
+    .c8c567716x {
+        --button-hover-bg: #334155;
+    }
+    .c1b1cac71x {
         background-color: #fff;
     }
-
-    .c9199c74cx {
+    .c90c2de94x {
+        background-color: var(--button-bg, var(--accent));
+    }
+    .cd41a0662x {
         box-shadow: 0 10px 24px #0f172a14;
     }
-
-    .c127e02cax {
+    .c4ac099a0x {
         color: #475569;
     }
-
-    .c22f72ba6x {
+    .c5fda4070x {
         color: #fff;
     }
-
-    .c3ef3cc46x {
-        color: #4338ca;
+    .cea81396dx {
+        color: var(--accent-hover);
     }
-
-    .ce0ddab4ax {
+    .ceea8dfd2x {
         cursor: pointer;
     }
-
-    .ce7785fbdx {
+    .cd38b73bfx {
+        display: flex;
+    }
+    .ce7ad6ee2x {
         display: grid;
     }
-
-    .cc96c07e6x {
-        font-size: 4rem;
+    .c15e54847x {
+        flex-wrap: wrap;
     }
-
-    .cd9dd6809x {
+    .c1e90d0c8x {
         font-size: 1.25rem;
     }
-
-    .ca8e08edex {
+    .c8aefc8b4x {
+        font-size: 3rem;
+    }
+    .cf2a3af49x {
         font-variant-numeric: tabular-nums;
     }
-
-    .c76c8d082x {
+    .c9ac03621x {
         font-weight: 600;
     }
-
-    .c77feabc1x {
+    .ca87e4d0dx {
         font-weight: 700;
     }
-
-    .cc4b60c17x {
+    .c09ce02d8x {
+        justify-content: center;
+    }
+    .c08962156x {
         justify-items: center;
     }
-
-    .c71f870d8x {
+    .c9b9f1081x {
         line-height: 1.1;
     }
-
-    .cb4146770x {
+    .cc459d65dx {
+        text-align: center;
+    }
+    .c39f7134ax {
         width: min(100%, 22rem);
     }
-}
-@layer csx.longhand.unconditional.hover {
-    .c67f703f2x:hover {
-        background-color: #4338ca;
+    .c24bfee4ax:where(:hover),
+    .cc79a069bx:where(:focus-visible) {
+        background-color: var(--button-hover-bg, var(--accent-hover));
+    }
+    .cb7a7ad5bx:where(:focus-visible) {
+        outline-offset: 2px;
+    }
+    .c58a60d0cx:where(:active) {
+        background-color: var(--button-hover-bg, var(--accent-hover));
+    }
+    .cfec2f0ebx:where(:active) {
+        translate: 0 1px;
+    }
+    .c5b8a5a95x:where(:disabled) {
+        background-color: #cbd5e1;
+    }
+    .c5d31a9bex:where(:disabled) {
+        color: #334155;
+    }
+    .c15323916x:where(:disabled) {
+        cursor: default;
+    }
+    .c8edf946ex:where(:disabled) {
+        translate: none;
+    }
+    @media (width>=36rem) {
+        .c7abf5738x {
+            font-size: 4rem;
+        }
+    }
+    @media (width>=60rem) {
+        .c8c504241x {
+            font-size: 5rem;
+        }
     }
 }
-
 body {
     color: #0f172a;
     background-color: #f1f5f9;
@@ -118,11 +157,9 @@ body {
     font-family: system-ui, sans-serif;
     display: grid;
 }
-
 * {
     box-sizing: border-box;
 }
-
 #root {
     justify-items: center;
     width: 100%;
