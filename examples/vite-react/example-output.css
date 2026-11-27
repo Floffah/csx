@@ -1,5 +1,5 @@
-@layer csx.reset.unconditional.base, csx.reset.unconditional.hover;
-@layer csx.shorthand.unconditional.base {
+@layer csx.reset, csx.shorthand, csx.longhand;
+@layer csx.shorthand {
     .cb06dc81dx {
         border: 0;
     }
@@ -36,8 +36,7 @@
         gap: 1rem;
     }
 }
-@layer csx.shorthand.unconditional.hover;
-@layer csx.longhand.unconditional.base {
+@layer csx.longhand {
     .c43838b30x {
         background-color: #4f46e5;
     }
@@ -101,9 +100,8 @@
     .cb4146770x {
         width: min(100%, 22rem);
     }
-}
-@layer csx.longhand.unconditional.hover {
-    .c67f703f2x:hover {
+
+    .c67f703f2x:where(:hover) {
         background-color: #4338ca;
     }
 }

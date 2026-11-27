@@ -33,20 +33,20 @@ pub(super) enum Layer {
 }
 
 // Later entries take precedence within each property tier and media group.
-type SelectorState<'i> = (Option<PseudoClass<'i>>, &'static str, &'static str);
+type SelectorState<'i> = (Option<PseudoClass<'i>>, &'static str);
 
 fn selector_states<'i>() -> &'i [SelectorState<'i>] {
     const {
         &[
-            (None, "", "base"),
-            (Some(Hover), ":hover", "hover"),
-            (Some(Focus), ":focus", "focus"),
-            (Some(FocusVisible), ":focus-visible", "focus-visible"),
-            (Some(Active), ":active", "active"),
-            (Some(Disabled), ":disabled", "disabled"),
-            (Some(FocusWithin), ":focus-within", "focus-within"),
-            (Some(Required), ":required", "required"),
-            (Some(Invalid), ":invalid", "invalid"),
+            (None, ""),
+            (Some(Hover), ":hover"),
+            (Some(Focus), ":focus"),
+            (Some(FocusVisible), ":focus-visible"),
+            (Some(Active), ":active"),
+            (Some(Disabled), ":disabled"),
+            (Some(FocusWithin), ":focus-within"),
+            (Some(Required), ":required"),
+            (Some(Invalid), ":invalid"),
         ]
     }
 }
@@ -55,13 +55,6 @@ fn selector_states<'i>() -> &'i [SelectorState<'i>] {
 pub(super) struct Condition(usize);
 
 impl Condition {
-    pub(super) fn ordered() -> impl Iterator<Item = (Self, &'static str)> {
-        selector_states()
-            .iter()
-            .enumerate()
-            .map(|(index, (_, _, layer))| (Self(index), *layer))
-    }
-
     pub(super) fn suffix(self) -> &'static str {
         selector_states()[self.0].1
     }
@@ -162,13 +155,13 @@ fn parse_rules(
                     let Some((class, condition)) = state.and_then(|(class, pseudo)| {
                         selector_states()
                             .iter()
-                            .position(|(known, _, _)| known.as_ref() == pseudo)
+                            .position(|(known, _)| known.as_ref() == pseudo)
                             .map(|index| (class, Condition(index)))
                     }) else {
                         let selector = selector.to_css_string(PrinterOptions::default())?;
                         let supported = selector_states()
                             .iter()
-                            .filter_map(|(pseudo, suffix, _)| pseudo.as_ref().map(|_| *suffix))
+                            .filter_map(|(pseudo, suffix)| pseudo.as_ref().map(|_| *suffix))
                             .collect::<Vec<_>>()
                             .join(", ");
                         return Err(JsError::new(&format!(

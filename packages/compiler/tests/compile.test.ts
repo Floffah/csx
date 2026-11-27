@@ -67,7 +67,9 @@ test("exports hashed class properties", () => {
             compiler.emit().match(new RegExp(`\\.${color} `, "g")),
         ).toHaveLength(1);
         const hover = result.exports.button[":hover:color"];
-        expect(compiler.emit()).toContain(`.${hover}:hover { color: #00f; }`);
+        expect(compiler.emit()).toContain(
+            `.${hover}:where(:hover) { color: #00f; }`,
+        );
     } finally {
         compiler.free();
     }
@@ -111,7 +113,7 @@ test("maps exported classes to the start of their preferred CSS rule", () => {
     }
 });
 
-test("keeps base and hover atoms distinct and orders their layers", () => {
+test("keeps base and hover atoms distinct and orders their rules", () => {
     const compiler = new Compiler({
         resolve: async () => "",
         load: async () => "",
@@ -132,12 +134,10 @@ test("keeps base and hover atoms distinct and orders their layers", () => {
         expect(linkHover).not.toBe(base);
         const css = compiler.emit();
         expect(css).toContain(`.${base} { color: red; }`);
-        expect(css).toContain(`.${hover}:hover { color: #00f; }`);
-        expect(css).toContain(`.${linkHover}:hover { color: red; }`);
-        expect(
-            css.indexOf("@layer csx.longhand.unconditional.base {"),
-        ).toBeLessThan(
-            css.indexOf("@layer csx.longhand.unconditional.hover {"),
+        expect(css).toContain(`.${hover}:where(:hover) { color: #00f; }`);
+        expect(css).toContain(`.${linkHover}:where(:hover) { color: red; }`);
+        expect(css.indexOf(`.${base} {`)).toBeLessThan(
+            css.indexOf(`.${hover}:where(:hover) {`),
         );
     } finally {
         compiler.free();
@@ -167,34 +167,38 @@ test("exports pseudo-class atoms independently in cascade order inside and outsi
                 .button { color: red; }
                 ${states.map((state) => `.button:${state}`).join(", ")} { color: red; }
                 @media screen {
+                    .button { color: blue; }
                     ${states.map((state) => `:${state}.button`).join(", ")} { color: red; }
                 }
             `,
         });
         const button = exports.button;
-        expect(Object.keys(button)).toHaveLength(1 + states.length * 2);
-        expect(new Set(Object.values(button)).size).toBe(1 + states.length * 2);
+        expect(Object.keys(button)).toHaveLength(2 + states.length * 2);
+        expect(new Set(Object.values(button)).size).toBe(2 + states.length * 2);
 
         const css = compiler.emit();
-        for (const group of ["unconditional", "media"]) {
-            let previousLayer = -1;
-            for (const state of states) {
-                const layer = css.indexOf(
-                    `@layer csx.longhand.${group}.${state} {`,
-                );
-                expect(layer).toBeGreaterThan(previousLayer);
-                previousLayer = layer;
-            }
-        }
-        for (const state of states) {
-            const key = `:${state}:color`;
-            const atom = button[key];
-            const mediaAtom = button[`@media 6:screen:${key}`];
-            expect(css).toContain(`.${atom}:${state} { color: red; }`);
-            expect(css).toContain(
-                `@media screen {\n    .${mediaAtom}:${state} { color: red; }`,
-            );
-        }
+        expect(css.match(/^@layer .*$/gm)).toEqual([
+            "@layer csx.reset, csx.shorthand, csx.longhand;",
+            "@layer csx.longhand {",
+        ]);
+        const unconditionalRules = states.map(
+            (state) =>
+                `.${button[`:${state}:color`]}:where(:${state}) { color: red; }`,
+        );
+        const mediaRules = states.map(
+            (state) =>
+                `.${button[`@media 6:screen::${state}:color`]}:where(:${state}) { color: red; }`,
+        );
+        expect(css).toContain(
+            [
+                `  .${button.color} { color: red; }`,
+                ...unconditionalRules.map((rule) => `  ${rule}`),
+                "  @media screen {",
+                `    .${button["@media 6:screen:color"]} { color: #00f; }`,
+                ...mediaRules.map((rule) => `    ${rule}`),
+                "  }",
+            ].join("\n"),
+        );
     } finally {
         compiler.free();
     }
@@ -218,6 +222,12 @@ test("emits selected modules in a stable cascade order", () => {
             source: ".other { color: green; }",
         });
         const css = compiler.emit();
+        expect(css.match(/^@layer .*$/gm)).toEqual([
+            "@layer csx.reset, csx.shorthand, csx.longhand;",
+            "@layer csx.reset {",
+            "@layer csx.shorthand {",
+            "@layer csx.longhand {",
+        ]);
         expect(compiler.emit(["/other.x.css", "/button.x.css"])).toBe(css);
         expect(compiler.emit(["/button.x.css", "/other.x.css"])).toBe(css);
         expect(css.indexOf("all: unset")).toBeLessThan(
@@ -271,11 +281,11 @@ test("exports base, media, and media hover declarations independently", () => {
         expect(css).toContain(
             `@media screen, print {\n    .${media} { margin: 1rem; }`,
         );
-        expect(css).toContain(`.${hover}:hover { margin: 1rem; }`);
+        expect(css).toContain(`.${hover}:where(:hover) { margin: 1rem; }`);
         expect(css.indexOf(`.${exports.button.margin} {`)).toBeLessThan(
             css.indexOf(`.${media} {`),
         );
-        expect(css.indexOf(`.${hover}:hover {`)).toBeLessThan(
+        expect(css.indexOf(`.${hover}:where(:hover) {`)).toBeLessThan(
             css.indexOf(`.${exports.button["margin-left"]} {`),
         );
     } finally {
