@@ -13,9 +13,18 @@ export function App() {
             <output {...props(styles.count, count > 0 && styles.counted)}>
                 {count}
             </output>
-            <Button onClick={() => setCount((current) => current + 1)}>
-                Increment
-            </Button>
+            <div {...props(styles.actions)}>
+                <Button onClick={() => setCount((current) => current + 1)}>
+                    Increment
+                </Button>
+                <Button
+                    secondary
+                    disabled={count === 0}
+                    onClick={() => setCount(0)}
+                >
+                    Reset
+                </Button>
+            </div>
         </main>
     );
 }

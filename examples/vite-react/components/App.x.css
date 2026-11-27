@@ -3,7 +3,7 @@
     justify-items: center;
     gap: 1rem;
     width: min(100%, 22rem);
-    padding: 2rem;
+    padding: 1.25rem;
     border: 1px solid #e2e8f0;
     border-radius: 1.5rem;
     background-color: #fff;
@@ -17,12 +17,35 @@
 
 .count {
     color: #475569;
-    font-size: 4rem;
+    font-size: 3rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     line-height: 1.1;
 }
 
 .counted {
-    color: #4338ca;
+    color: var(--accent-hover);
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+@media (min-width: 36rem) {
+    .card {
+        padding: 2rem;
+    }
+
+    .count {
+        font-size: 4rem;
+    }
+}
+
+@media (min-width: 60rem) {
+    .count {
+        font-size: 5rem;
+    }
 }
