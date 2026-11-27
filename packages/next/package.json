@@ -28,7 +28,7 @@
     "dependencies": {
         "@csx-style/compiler": "0.1.0",
         "magic-string": "^0.30.21",
-        "oxc-parser": "^0.159.0"
+        "oxc-parser": "^0.160.0"
     },
     "peerDependencies": {
         "next": "^16.0.0"
