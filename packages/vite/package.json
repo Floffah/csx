@@ -1,6 +1,6 @@
 {
     "name": "@csx-style/vite",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "description": "Import CSX stylesheets in Vite apps.",
     "license": "MIT",
     "repository": {
@@ -22,7 +22,7 @@
         "build": "tsdown"
     },
     "dependencies": {
-        "@csx-style/compiler": "0.0.1",
+        "@csx-style/compiler": "0.1.0",
         "postcss": "^8.5.33"
     },
     "peerDependencies": {
